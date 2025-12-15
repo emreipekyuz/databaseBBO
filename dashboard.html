@@ -1,170 +1,1497 @@
 <!doctype html>
 <html lang="tr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BBO | Dashboard</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BBO | Dashboard</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
-<style>
-body{
-  margin:0;font-family:system-ui;background:#f6fbff;color:#0b1a33;
-}
-.hidden{display:none}
-.container{max-width:1200px;margin:auto;padding:16px}
-.card{
-  background:#fff;border-radius:16px;padding:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
-  margin-bottom:16px;
-}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.kpi h3{margin:0;font-size:14px;color:#64748b}
-.kpi div{font-size:28px;font-weight:800}
-button{
-  background:#2563eb;color:#fff;border:none;
-  padding:10px 14px;border-radius:12px;
-  font-weight:700;cursor:pointer
-}
-input{width:100%;padding:12px;border-radius:12px;border:1px solid #cbd5e1}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.event{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:8px}
-.badge{background:#2563eb;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
-.badge.gray{background:#94a3b8}
-</style>
+  <style>
+    :root{
+      --bg:#f6fbff;
+      --card: rgba(255,255,255,.86);
+      --text:#071a36;
+      --muted: rgba(7,26,54,.62);
+      --border: rgba(7,26,54,.10);
+      --shadow: 0 18px 46px rgba(2,18,50,.12);
+      --blue:#1d4ed8;
+      --cyan:#06b6d4;
+      --slate:#94a3b8;
+      --good:#16a34a;
+      --warn:#f59e0b;
+      --bad:#b42318;
+      --glass: blur(12px);
+      --r: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; color:var(--text);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:
+        radial-gradient(1200px 720px at 16% 0%, rgba(29,78,216,.16), transparent 60%),
+        radial-gradient(900px 560px at 84% 8%, rgba(6,182,212,.12), transparent 62%),
+        var(--bg);
+    }
+    .hidden{display:none!important}
+    .wrap{max-width:1200px;margin:0 auto;padding:18px;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      backdrop-filter: var(--glass);
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:14px;
+    }
+    .brand{display:flex; align-items:center; gap:12px; min-width:0;}
+    .logo{
+      width:42px;height:42px;border-radius:16px;
+      background: linear-gradient(135deg, rgba(29,78,216,.95), rgba(6,182,212,.95));
+      box-shadow: var(--shadow);
+      flex:0 0 auto;
+    }
+    .title{min-width:0}
+    .title h1{margin:0;font-size:18px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .title p{margin:2px 0 0;color:var(--muted);font-weight:800;font-size:12px}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{
+      border:none; cursor:pointer;
+      padding:10px 12px; border-radius:14px; font-weight:950;
+      color:#fff; background: var(--blue);
+      box-shadow: 0 12px 26px rgba(29,78,216,.22);
+    }
+    .btn.secondary{background:var(--cyan); box-shadow: 0 12px 26px rgba(6,182,212,.20);}
+    .btn.ghost{
+      background: rgba(255,255,255,.72);
+      color: var(--text);
+      border:1px solid var(--border);
+      box-shadow:none;
+    }
+    .btn.small{padding:8px 10px;border-radius:12px;font-weight:950}
+    .btn.danger{background: var(--bad); box-shadow: 0 12px 26px rgba(180,35,24,.18);}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, minmax(0,1fr));
+      gap:12px;
+      margin-bottom:12px;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns: repeat(6, minmax(0,1fr));}
+    }
+    @media (max-width: 560px){
+      .grid{grid-template-columns: repeat(1, minmax(0,1fr));}
+    }
+    .col-12{grid-column: span 12;}
+    .col-8{grid-column: span 8;}
+    .col-6{grid-column: span 6;}
+    .col-4{grid-column: span 4;}
+    .col-3{grid-column: span 3;}
+    .col-5{grid-column: span 5;}
+    .col-7{grid-column: span 7;}
+    @media (max-width: 980px){
+      .col-8,.col-7,.col-5{grid-column: span 6;}
+      .col-4,.col-3{grid-column: span 3;}
+      .col-12{grid-column: span 6;}
+    }
+    @media (max-width: 560px){
+      .col-8,.col-7,.col-6,.col-5,.col-4,.col-3,.col-12{grid-column: span 1;}
+    }
+
+    .pad{padding:14px;}
+    .kpi .label{font-size:12px;color:var(--muted);font-weight:950;margin-bottom:6px}
+    .kpi .value{font-size:24px;font-weight:1000;letter-spacing:-.4px}
+    .kpi .sub{margin-top:6px;font-size:12px;color:var(--muted);font-weight:900}
+
+    .chipRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .chip{
+      display:flex;align-items:center;gap:8px;
+      padding:10px 12px; border-radius:14px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.72);
+      font-weight:950; font-size:13px;
+      min-height:42px;
+    }
+    .chip input[type="checkbox"]{width:18px;height:18px}
+    .grow{flex:1;min-width:220px}
+    .input{
+      width:100%;
+      border:none; outline:none;
+      background:transparent;
+      font-weight:950;
+      color: var(--text);
+    }
+    .status{
+      padding:10px 12px;border-radius:14px;border:1px solid var(--border);
+      background: rgba(255,255,255,.65);
+      font-weight:950;font-size:13px;color:var(--muted);
+      min-height:42px;
+      display:flex;align-items:center;
+    }
+
+    .sectionTitle{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom:10px;
+    }
+    .sectionTitle h2{margin:0;font-size:14px;font-weight:1000}
+    .sectionTitle p{margin:2px 0 0;font-size:12px;color:var(--muted);font-weight:900}
+    .muted{color:var(--muted)}
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px;
+      font-size:12px; font-weight:1000;
+      border:1px solid rgba(29,78,216,.18);
+      background: rgba(29,78,216,.10);
+      white-space:nowrap;
+    }
+    .pill.good{border-color:rgba(22,163,74,.22); background: rgba(22,163,74,.12)}
+    .pill.warn{border-color:rgba(245,158,11,.28); background: rgba(245,158,11,.14)}
+    .pill.bad{border-color:rgba(180,35,24,.22); background: rgba(180,35,24,.12)}
+    .pill.gray{border-color:rgba(148,163,184,.25); background: rgba(148,163,184,.14)}
+
+    .projects{display:flex;flex-direction:column;gap:12px}
+    .projectCard{padding:14px}
+    .projectHead{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+      margin-bottom:10px;
+    }
+    .projectName{margin:0;font-size:15px;font-weight:1000}
+    .projectMeta{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
+    .eventList{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .eventRow{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:16px;
+      border:1px solid rgba(7,26,54,.10);
+      background: rgba(255,255,255,.74);
+    }
+    .eventLeft{min-width:0}
+    .eventTitle{margin:0 0 4px;font-weight:1000;font-size:14px}
+    .eventSmall{font-size:12px;color:var(--muted);font-weight:900;display:flex;gap:10px;flex-wrap:wrap}
+    .badge{
+      padding:6px 10px; border-radius:999px; font-size:12px; font-weight:1000;
+      color:#fff; background: var(--blue);
+      white-space:nowrap;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .badge.inactive{background: var(--slate);}
+    .badge.good{background: var(--good);}
+
+    .empty{
+      padding:12px; border-radius:16px;
+      border:1px dashed rgba(7,26,54,.22);
+      background: rgba(255,255,255,.55);
+      color:var(--muted); font-weight:950; font-size:13px;
+    }
+
+    /* HEATMAP */
+    .heat{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:6px;
+      table-layout:fixed;
+    }
+    .heat th,.heat td{
+      font-size:11px; font-weight:950; color:var(--muted);
+      text-align:center;
+    }
+    .cell{
+      border:1px solid rgba(7,26,54,.10);
+      border-radius:12px;
+      height:34px;
+      background: rgba(29,78,216,.06);
+      color: var(--text);
+      font-weight:1000;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    /* Drawer (Event detail) */
+    .drawerMask{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.28);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding:14px;
+      z-index:50;
+    }
+    .drawerMask.show{display:flex;}
+    .drawer{
+      width:min(980px, 100%);
+      max-height:86vh;
+      overflow:hidden;
+      border-radius: 22px;
+    }
+    .drawerHeader{
+      padding:14px;
+      display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+      border-bottom:1px solid var(--border);
+    }
+    .drawerBody{
+      padding:14px;
+      overflow:auto;
+      max-height: calc(86vh - 64px);
+    }
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:16px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.75);
+    }
+    .table th{
+      text-align:left;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:1000;
+      padding:10px;
+      border-bottom:1px solid var(--border);
+      background: rgba(255,255,255,.80);
+      position:sticky; top:0;
+      backdrop-filter: var(--glass);
+    }
+    .table td{
+      padding:10px;
+      font-size:13px;
+      font-weight:900;
+      border-bottom:1px solid rgba(7,26,54,.08);
+    }
+    .table tr:last-child td{border-bottom:none;}
+
+    /* PIN gate */
+    .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;}
+    .pinCard{max-width:400px;width:100%;padding:18px;}
+    .pinCard h3{margin:0 0 10px;font-size:18px}
+    .pinNote{min-height:18px;margin-top:8px;font-size:12px;font-weight:1000;color:var(--bad);}
+    .pinInput{
+      width:100%;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(7,26,54,.16);
+      font-weight:1000;
+      outline:none;
+      background:#fff;
+    }
+    .pinInput:focus{border-color: rgba(29,78,216,.55); box-shadow:0 0 0 4px rgba(29,78,216,.12);}
+
+    /* Skeleton */
+    .skeleton{
+      position:relative;
+      overflow:hidden;
+      background: rgba(255,255,255,.55);
+    }
+    .skeleton::after{
+      content:"";
+      position:absolute; inset:0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(29,78,216,.10), transparent);
+      animation: sh 1.1s infinite;
+    }
+    @keyframes sh{
+      to{transform: translateX(100%);}
+    }
+  </style>
 </head>
 
 <body>
-
-<!-- PIN -->
-<div id="pinScreen" class="container">
-  <div class="card" style="max-width:360px;margin:auto">
-    <h2>Dashboard Girişi</h2>
-    <input id="pinInput" type="password" placeholder="PIN">
-    <button onclick="unlock()">Giriş</button>
-    <div id="pinNote" style="color:#b91c1c;font-weight:700"></div>
+  <!-- PIN -->
+  <div id="pinScreen" class="center">
+    <div class="card pinCard">
+      <div class="brand" style="margin-bottom:10px;">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Dashboard</h1>
+          <p>PIN ile açılır (hızlı kullanım)</p>
+        </div>
+      </div>
+      <input id="pinInput" class="pinInput" type="password" inputmode="numeric" placeholder="PIN (4-8 haneli)" />
+      <div class="row" style="margin-top:10px;">
+        <button class="btn" id="pinBtn" style="flex:1;">Aç</button>
+        <button class="btn ghost" id="pinClear">Temizle</button>
+      </div>
+      <div class="pinNote" id="pinNote"></div>
+      <div class="muted" style="font-weight:900;font-size:12px;margin-top:10px;">
+        Not: Bu sayfa veri çekemiyorsa Supabase URL/KEY veya RLS/View sorunludur.
+      </div>
+    </div>
   </div>
-</div>
 
-<!-- APP -->
-<div id="app" class="hidden">
-  <div class="container">
-
+  <!-- APP -->
+  <div id="app" class="wrap hidden">
     <div class="topbar">
-      <h2>Bir Bulut Olsam – Etkinlik Dashboard</h2>
-      <button onclick="lock()">Kilitle</button>
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="title">
+          <h1>Bir Bulut Olsam · Etkinlik Dashboard</h1>
+          <p>Proje → Etkinlik → Katılımcı · Analiz + operasyon</p>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn ghost" id="reloadBtn">Yenile</button>
+        <button class="btn secondary" id="lockBtn">Kilitle</button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="card pad" style="margin-bottom:12px;">
+      <div class="chipRow">
+        <div class="chip grow">
+          <span>Arama</span>
+          <input id="search" class="input" placeholder="Proje / etkinlik / kod ara" />
+        </div>
+
+        <div class="chip">
+          <span>Zaman</span>
+          <select id="range" class="input" style="min-width:150px;font-weight:1000;">
+            <option value="7">Son 7 gün</option>
+            <option value="30" selected>Son 30 gün</option>
+            <option value="90">Son 90 gün</option>
+            <option value="365">Son 1 yıl</option>
+          </select>
+        </div>
+
+        <label class="chip" style="cursor:pointer;">
+          <input type="checkbox" id="onlyActive" />
+          <span>Sadece aktif etkinlikler</span>
+        </label>
+
+        <div class="status" id="status">Hazır</div>
+      </div>
     </div>
 
     <!-- KPI -->
     <div class="grid">
-      <div class="card kpi"><h3>Toplam Katılımcı</h3><div id="kpiTotal">—</div></div>
-      <div class="card kpi"><h3>Bugün Check-in</h3><div id="kpiToday">—</div></div>
-      <div class="card kpi"><h3>Toplam Etkinlik</h3><div id="kpiEvents">—</div></div>
-      <div class="card kpi"><h3>Aktif Etkinlik</h3><div id="kpiActive">—</div></div>
+      <div class="card pad kpi col-3">
+        <div class="label">Toplam check-in</div>
+        <div class="value" id="kpiTotal">—</div>
+        <div class="sub" id="kpiTotalSub">Seçilen aralık</div>
+      </div>
+      <div class="card pad kpi col-3">
+        <div class="label">Bugün check-in</div>
+        <div class="value" id="kpiToday">—</div>
+        <div class="sub">00:00’dan itibaren</div>
+      </div>
+      <div class="card pad kpi col-3">
+        <div class="label">Aktif etkinlik</div>
+        <div class="value" id="kpiActive">—</div>
+        <div class="sub">Şu an açık</div>
+      </div>
+      <div class="card pad kpi col-3">
+        <div class="label">“Beklenen yoğunluk” (bugün)</div>
+        <div class="value" id="kpiForecast">—</div>
+        <div class="sub">Son 4 haftanın aynı günü ort.</div>
+      </div>
     </div>
 
-    <!-- GRAFİKLER -->
+    <!-- Charts + Heatmap -->
     <div class="grid">
-      <div class="card">
-        <h3>Günlere Göre Katılım</h3>
-        <canvas id="chartDays"></canvas>
+      <div class="card pad col-8">
+        <div class="sectionTitle">
+          <div>
+            <h2>Günlük check-in trendi</h2>
+            <p>Topluluğun ivmesi: yükseliyor mu, düşüyor mu?</p>
+          </div>
+          <span class="pill gray" id="trendTag">—</span>
+        </div>
+        <canvas id="chartDaily" height="120"></canvas>
       </div>
-      <div class="card">
-        <h3>Etkinlik Bazlı Katılım</h3>
-        <canvas id="chartEvents"></canvas>
+
+      <div class="card pad col-4">
+        <div class="sectionTitle">
+          <div>
+            <h2>Hafta içi / saat ısı haritası</h2>
+            <p>Operasyon: pik saatleri gör</p>
+          </div>
+          <span class="pill gray" id="peakTag">—</span>
+        </div>
+        <div id="heatWrap"></div>
       </div>
     </div>
 
-    <!-- PROJELER -->
-    <div id="projects"></div>
+    <div class="grid">
+      <div class="card pad col-6">
+        <div class="sectionTitle">
+          <div>
+            <h2>Etkinlik bazlı katılım (Top 12)</h2>
+            <p>Hangi etkinlik gerçekten çalışıyor?</p>
+          </div>
+          <button class="btn ghost small" id="csvAllBtn">CSV: tüm check-in</button>
+        </div>
+        <canvas id="chartTopEvents" height="140"></canvas>
+      </div>
 
+      <div class="card pad col-6">
+        <div class="sectionTitle">
+          <div>
+            <h2>Yeni vs geri gelen</h2>
+            <p>Gerçek büyüme mi, aynı çekirdek mi?</p>
+          </div>
+          <span class="pill gray" id="retentionTag">—</span>
+        </div>
+        <canvas id="chartNewReturning" height="140"></canvas>
+      </div>
+    </div>
+
+    <!-- Ops mode -->
+    <div class="grid">
+      <div class="card pad col-7">
+        <div class="sectionTitle">
+          <div>
+            <h2>Operasyon modu: açık etkinlikler</h2>
+            <p>Tek bakış: kod, QR link, son check-in</p>
+          </div>
+          <span class="pill good" id="activeCountTag">—</span>
+        </div>
+        <div id="activeEvents" class="projects"></div>
+      </div>
+
+      <div class="card pad col-5">
+        <div class="sectionTitle">
+          <div>
+            <h2>Kalite kontrol</h2>
+            <p>Kötü veri = çöp karar. Burayı hafife alma.</p>
+          </div>
+          <span class="pill warn" id="qcTag">—</span>
+        </div>
+        <div id="qcList"></div>
+
+        <div style="height:10px"></div>
+
+        <div class="sectionTitle">
+          <div>
+            <h2>Çapraz katılım matrisi (Top 6 proje)</h2>
+            <p>Hangi proje birbirine trafik taşıyor?</p>
+          </div>
+        </div>
+        <div id="crossWrap"></div>
+      </div>
+    </div>
+
+    <!-- Projects hierarchy -->
+    <div class="card pad">
+      <div class="sectionTitle">
+        <div>
+          <h2>Projeler → Etkinlikler</h2>
+          <p>Katılım, aktiflik, son check-in, performans etiketi</p>
+        </div>
+        <span class="pill gray" id="shownTag">—</span>
+      </div>
+      <div id="projects" class="projects"></div>
+    </div>
   </div>
-</div>
+
+  <!-- Drawer -->
+  <div id="drawerMask" class="drawerMask" aria-hidden="true">
+    <div class="card drawer" role="dialog" aria-modal="true">
+      <div class="drawerHeader">
+        <div style="min-width:0;">
+          <div style="font-weight:1000;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="drawerTitle">Etkinlik</div>
+          <div class="muted" style="font-weight:900;font-size:12px;margin-top:4px;" id="drawerSub">—</div>
+          <div class="row" style="margin-top:8px;">
+            <span class="pill" id="drawerPill">—</span>
+            <span class="pill gray" id="drawerLast">—</span>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn ghost small" id="csvEventBtn">CSV: bu etkinlik</button>
+          <button class="btn ghost small" id="copyQrBtn">QR link kopyala</button>
+          <button class="btn small danger" id="closeDrawerBtn">Kapat</button>
+        </div>
+      </div>
+      <div class="drawerBody">
+        <div class="chipRow" style="margin-bottom:10px;">
+          <div class="chip grow">
+            <span>Filtre</span>
+            <input id="drawerFilter" class="input" placeholder="ad / mail / telefon ara" />
+          </div>
+          <div class="status" id="drawerStatus">—</div>
+        </div>
+
+        <table class="table" id="drawerTable">
+          <thead>
+            <tr>
+              <th style="width:26%">Ad Soyad</th>
+              <th style="width:22%">Mail</th>
+              <th style="width:18%">Telefon</th>
+              <th style="width:12%">KVKK</th>
+              <th style="width:22%">Tarih</th>
+            </tr>
+          </thead>
+          <tbody id="drawerTbody"></tbody>
+        </table>
+
+        <div class="muted" style="font-weight:900;font-size:12px;margin-top:10px;">
+          Not: Büyük etkinliklerde listeyi sayfalama ile genişletmek istersen ekleriz.
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
-/* === AYARLAR === */
-const DASHBOARD_PIN = "123456"; // DEĞİŞTİR
-const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXpjbGFyamZud3FuamV4Z3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODk4MTksImV4cCI6MjA4MTM2NTgxOX0.r5RpP-r0P8fbnRP3rt_Bwn12CmMESbXSn86kg4FWzfM";
+/* =========================
+   0) CONFIG (sen dolduracaksın)
+========================= */
+const DASHBOARD_PIN = "123456"; // değiştir
+const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* === PIN === */
-function unlock(){
-  if(document.getElementById("pinInput").value !== DASHBOARD_PIN){
-    document.getElementById("pinNote").innerText="PIN yanlış";
-    return;
-  }
-  sessionStorage.setItem("bbo_ok","1");
-  document.getElementById("pinScreen").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  loadAll();
+/* =========================
+   1) STATE
+========================= */
+const state = {
+  days: 30,
+  search: "",
+  onlyActive: false,
+  projects: [],
+  events: [],
+  attendances: [],
+  byEvent: new Map(),
+  byProject: new Map(),
+  charts: { daily:null, topEvents:null, newReturning:null },
+  drawer: { event:null, rows:[] }
+};
+
+const $ = (id) => document.getElementById(id);
+
+function setStatus(t){ $("status").textContent = t; }
+
+function escapeHtml(str){
+  return (str ?? "").toString().replace(/[&<>"']/g, (m) => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
 }
+
+function fmtTR(n){ return (Number(n)||0).toLocaleString("tr-TR"); }
+
+function toISOStartOfDay(d){
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  return x.toISOString();
+}
+function toISOStartDaysAgo(days){
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return toISOStartOfDay(d);
+}
+function isValidEmail(e){
+  if(!e) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim().toLowerCase());
+}
+function normPhone(p){
+  if(!p) return "";
+  return String(p).replace(/[^\d+]/g,"").replace(/^00/,"+");
+}
+function normEmail(e){
+  return String(e||"").trim().toLowerCase();
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* =========================
+   2) PIN Gate
+========================= */
 function lock(){
-  sessionStorage.clear();
+  sessionStorage.removeItem("bbo_dash_ok");
   location.reload();
 }
-if(sessionStorage.getItem("bbo_ok")==="1") unlock();
-
-/* === LOAD === */
-async function loadAll(){
-  const { data } = await sb.from("project_event_counts").select("*");
-  renderKPI(data);
-  renderProjects(data);
-  renderCharts(data);
+function unlock(){
+  sessionStorage.setItem("bbo_dash_ok","1");
+  $("pinScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
 }
 
-/* === KPI === */
-function renderKPI(rows){
-  const total = rows.reduce((a,r)=>a+(r.attendee_count||0),0);
-  document.getElementById("kpiTotal").innerText=total;
-  document.getElementById("kpiEvents").innerText=new Set(rows.map(r=>r.event_id)).size;
-  document.getElementById("kpiActive").innerText=rows.filter(r=>r.is_active).length;
-  document.getElementById("kpiToday").innerText="—";
-}
-
-/* === PROJECTS === */
-function renderProjects(rows){
-  const root=document.getElementById("projects");
-  root.innerHTML="";
-  const map={};
-  rows.forEach(r=>{
-    if(!map[r.project_name]) map[r.project_name]=[];
-    map[r.project_name].push(r);
-  });
-
-  for(const p in map){
-    const card=document.createElement("div");
-    card.className="card";
-    card.innerHTML=`<h3>${p}</h3>`;
-    map[p].forEach(e=>{
-      card.innerHTML+=`
-        <div class="event">
-          <strong>${e.event_title}</strong><br>
-          <span class="badge ${e.is_active?"":"gray"}">${e.attendee_count} kişi</span>
-        </div>`;
-    });
-    root.appendChild(card);
+$("pinBtn").addEventListener("click", async () => {
+  const v = ($("pinInput").value || "").trim();
+  if(v !== DASHBOARD_PIN){
+    $("pinNote").textContent = "PIN yanlış.";
+    return;
   }
+  $("pinNote").textContent = "";
+  unlock();
+  await loadAll();
+});
+
+$("pinClear").addEventListener("click", ()=>{
+  $("pinInput").value = "";
+  $("pinNote").textContent = "";
+});
+
+$("lockBtn").addEventListener("click", lock);
+$("reloadBtn").addEventListener("click", loadAll);
+
+if(sessionStorage.getItem("bbo_dash_ok")==="1"){
+  unlock();
+  // hemen yükle
+  loadAll();
 }
 
-/* === CHARTS === */
-function renderCharts(rows){
-  const byEvent={};
-  rows.forEach(r=>{
-    byEvent[r.event_title]=(byEvent[r.event_title]||0)+r.attendee_count;
+/* =========================
+   3) DATA LOADING
+========================= */
+async function fetchAll(){
+  setStatus("Veri çekiliyor…");
+
+  const sinceISO = toISOStartDaysAgo(state.days);
+
+  // projects
+  const pRes = await sb.from("projects").select("id, project_name").order("project_name",{ascending:true});
+  if(pRes.error) throw pRes.error;
+
+  // events
+  const eRes = await sb.from("events").select("id, project_id, event_title, event_code, is_active, created_at").order("created_at",{ascending:false});
+  if(eRes.error) throw eRes.error;
+
+  // attendances (range)
+  // Not: büyük veride pagination gerekebilir. Şimdilik last N days limit 5000.
+  const aRes = await sb
+    .from("attendances")
+    .select("id, event_id, full_name, phone, email, kvkk_accepted, created_at")
+    .gte("created_at", sinceISO)
+    .order("created_at", { ascending: false })
+    .limit(5000);
+
+  if(aRes.error) throw aRes.error;
+
+  state.projects = pRes.data || [];
+  state.events = eRes.data || [];
+  state.attendances = aRes.data || [];
+
+  // maps
+  state.byProject = new Map(state.projects.map(p => [p.id, p]));
+  state.byEvent = new Map(state.events.map(e => [e.id, e]));
+}
+
+function buildAggregates(){
+  // eventStats: {count, last, kvkkNo, badEmail, badPhone, uniqPeopleSet}
+  const eventStats = new Map();
+  const projectStats = new Map(); // by project_id
+
+  const todayISO = toISOStartOfDay(new Date());
+  let todayCount = 0;
+
+  for(const a of state.attendances){
+    if(a.created_at >= todayISO) todayCount++;
+
+    const e = state.byEvent.get(a.event_id);
+    if(!e) continue;
+
+    const evId = e.id;
+    if(!eventStats.has(evId)){
+      eventStats.set(evId, {
+        event_id: evId,
+        count:0,
+        last: null,
+        kvkkNo:0,
+        badEmail:0,
+        badPhone:0,
+        people: new Set(), // email/phone fingerprint
+      });
+    }
+    const s = eventStats.get(evId);
+    s.count++;
+    if(!s.last || a.created_at > s.last) s.last = a.created_at;
+
+    const kv = !!a.kvkk_accepted;
+    if(!kv) s.kvkkNo++;
+
+    const em = normEmail(a.email);
+    if(!isValidEmail(em)) s.badEmail++;
+
+    const ph = normPhone(a.phone);
+    // telefon en az 10 rakam gibi kaba kontrol
+    const digits = ph.replace(/[^\d]/g,"");
+    if(digits.length < 10) s.badPhone++;
+
+    const fp = em || ph || (a.full_name || "").trim().toLowerCase();
+    if(fp) s.people.add(fp);
+
+    const prId = e.project_id;
+    if(!projectStats.has(prId)){
+      projectStats.set(prId, {
+        project_id: prId,
+        count:0,
+        events: new Set(),
+        last:null,
+        people: new Set(),
+      });
+    }
+    const ps = projectStats.get(prId);
+    ps.count++;
+    ps.events.add(evId);
+    if(!ps.last || a.created_at > ps.last) ps.last = a.created_at;
+    if(fp) ps.people.add(fp);
+  }
+
+  // attach computed stats into events list
+  const enrichedEvents = state.events.map(ev => {
+    const st = eventStats.get(ev.id) || {count:0,last:null,kvkkNo:0,badEmail:0,badPhone:0,people:new Set()};
+    return {
+      ...ev,
+      attendee_count: st.count,
+      last_checkin_at: st.last,
+      qc: { kvkkNo: st.kvkkNo, badEmail: st.badEmail, badPhone: st.badPhone },
+      uniq_people: st.people.size
+    };
   });
 
-  new Chart(document.getElementById("chartEvents"),{
-    type:"bar",
-    data:{
-      labels:Object.keys(byEvent),
-      datasets:[{data:Object.values(byEvent),backgroundColor:"#2563eb"}]
+  // project summary
+  const enrichedProjects = state.projects.map(p => {
+    const ps = projectStats.get(p.id) || {count:0,events:new Set(),last:null,people:new Set()};
+    const evCount = ps.events.size;
+    return {
+      ...p,
+      attendee_count: ps.count,
+      events_count: evCount,
+      last_checkin_at: ps.last,
+      uniq_people: ps.people.size
+    };
+  });
+
+  return { enrichedEvents, enrichedProjects, todayCount };
+}
+
+/* =========================
+   4) ANALYTICS (smart bits)
+========================= */
+function computeForecastSameWeekday(){
+  // “beklenen yoğunluk”: son 28 gün içinde aynı weekday toplam ortalaması
+  const now = new Date();
+  const wd = now.getDay(); // 0 sun
+  const start = new Date(); start.setDate(start.getDate() - 28);
+  start.setHours(0,0,0,0);
+
+  const buckets = [0,0,0,0]; // 4 hafta
+  for(const a of state.attendances){
+    const d = new Date(a.created_at);
+    if(d < start) continue;
+    if(d.getDay() !== wd) continue;
+
+    // hangi hafta dilimi
+    const diffDays = Math.floor((now - d) / (1000*60*60*24));
+    const w = Math.min(3, Math.floor(diffDays / 7));
+    buckets[w] += 1;
+  }
+  const avg = buckets.reduce((x,y)=>x+y,0) / 4;
+  return Math.round(avg);
+}
+
+function dailySeries(){
+  // last N days daily counts
+  const n = state.days;
+  const map = new Map(); // yyyy-mm-dd -> count
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  for(let i=n-1;i>=0;i--){
+    const d = new Date(today); d.setDate(d.getDate()-i);
+    const k = d.toISOString().slice(0,10);
+    map.set(k, 0);
+  }
+  for(const a of state.attendances){
+    const k = String(a.created_at).slice(0,10);
+    if(map.has(k)) map.set(k, map.get(k)+1);
+  }
+  const labels = [...map.keys()];
+  const values = labels.map(k => map.get(k));
+  return { labels, values };
+}
+
+function heatmapWeekdayHour(){
+  // 7x24
+  const grid = Array.from({length:7},()=>Array.from({length:24},()=>0));
+  for(const a of state.attendances){
+    const d = new Date(a.created_at);
+    const wd = d.getDay();
+    const hr = d.getHours();
+    grid[wd][hr] += 1;
+  }
+  // peak
+  let peak = {wd:0,hr:0,val:0};
+  for(let w=0;w<7;w++){
+    for(let h=0;h<24;h++){
+      const v = grid[w][h];
+      if(v>peak.val) peak = {wd:w,hr:h,val:v};
+    }
+  }
+  return { grid, peak };
+}
+
+function topEventsSeries(enrichedEvents){
+  // top 12 by attendee_count in range
+  const arr = [...enrichedEvents].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0)).slice(0,12);
+  return {
+    labels: arr.map(e => e.event_title || "Etkinlik"),
+    values: arr.map(e => e.attendee_count || 0),
+    rows: arr
+  };
+}
+
+function newReturningSeries(){
+  // “yeni vs geri gelen”: aynı email/phone daha önce (seçilen aralığın ilk gününden önce) var mı?
+  // Bu dosya sadece seçilen aralık attendances çekiyor. “geri gelen” için geçmiş gerekir.
+  // Akıllı hile: seçilen aralık içinde ilk kez görülenler = “yeni”; aynı aralık içinde tekrar görülenler = “geri (aralık içi)”.
+  // İstersen bunu gerçek “tüm zamanlar” yapacak şekilde pagination+older pull ekleriz.
+  const seen = new Set();
+  let newCount = 0;
+  let returningCount = 0;
+
+  // created_at desc geliyor; biz kronolojik yapalım:
+  const rows = [...state.attendances].sort((a,b)=>a.created_at.localeCompare(b.created_at));
+
+  for(const a of rows){
+    const fp = normEmail(a.email) || normPhone(a.phone) || (a.full_name||"").trim().toLowerCase();
+    if(!fp) continue;
+    if(seen.has(fp)) returningCount++;
+    else { seen.add(fp); newCount++; }
+  }
+
+  return { newCount, returningCount };
+}
+
+function crossParticipationTopProjects(enrichedEvents, enrichedProjects){
+  // Top 6 project by attendee_count; matrix based on shared people (approx from attendances in range)
+  const top = [...enrichedProjects].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0)).slice(0,6);
+
+  // build project -> people set from attendances in range
+  const projPeople = new Map(top.map(p=>[p.id, new Set()]));
+  for(const a of state.attendances){
+    const ev = state.byEvent.get(a.event_id);
+    if(!ev) continue;
+    if(!projPeople.has(ev.project_id)) continue;
+    const fp = normEmail(a.email) || normPhone(a.phone) || (a.full_name||"").trim().toLowerCase();
+    if(fp) projPeople.get(ev.project_id).add(fp);
+  }
+
+  const names = top.map(p=>p.project_name || "Proje");
+  const ids = top.map(p=>p.id);
+  const mat = Array.from({length:ids.length},()=>Array.from({length:ids.length},()=>0));
+
+  for(let i=0;i<ids.length;i++){
+    for(let j=0;j<ids.length;j++){
+      if(i===j){ mat[i][j] = projPeople.get(ids[i]).size; continue; }
+      const A = projPeople.get(ids[i]);
+      const B = projPeople.get(ids[j]);
+      let inter = 0;
+      // iterate smaller
+      const [S,L] = A.size < B.size ? [A,B] : [B,A];
+      for(const x of S) if(L.has(x)) inter++;
+      mat[i][j] = inter;
+    }
+  }
+  return { names, mat };
+}
+
+function performanceTag(event){
+  // basit etiket: son check-in zamanına ve aktifliğe göre
+  if(!event.attendee_count) return {label:"Yeni / boş", cls:"gray"};
+  if(event.is_active && event.attendee_count >= 30) return {label:"Güçlü", cls:"good"};
+  if(event.is_active && event.attendee_count >= 10) return {label:"Stabil", cls:"warn"};
+  if(event.is_active) return {label:"Zayıf", cls:"warn"};
+  return {label:"Kapalı", cls:"gray"};
+}
+
+/* =========================
+   5) RENDER
+========================= */
+function renderKPIs({enrichedEvents, enrichedProjects, todayCount}){
+  const total = state.attendances.length;
+  $("kpiTotal").textContent = fmtTR(total);
+  $("kpiToday").textContent = fmtTR(todayCount);
+
+  const activeEvents = enrichedEvents.filter(e=>e.is_active===true).length;
+  $("kpiActive").textContent = fmtTR(activeEvents);
+
+  const fc = computeForecastSameWeekday();
+  $("kpiForecast").textContent = fmtTR(fc);
+
+  // trend tag (son 7 gün vs önceki 7 gün)
+  const s = dailySeries().values;
+  const last7 = s.slice(-7).reduce((a,b)=>a+b,0);
+  const prev7 = s.slice(-14,-7).reduce((a,b)=>a+b,0);
+  let tag = "Stabil";
+  if(last7 > prev7 * 1.15) tag = "Yükselişte";
+  if(last7 < prev7 * 0.85) tag = "Düşüşte";
+  $("trendTag").textContent = `Trend: ${tag}`;
+}
+
+function renderDailyChart(){
+  const {labels, values} = dailySeries();
+  const ctx = $("chartDaily").getContext("2d");
+
+  if(state.charts.daily) state.charts.daily.destroy();
+  state.charts.daily = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Check-in",
+        data: values,
+        tension: 0.25,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8 } },
+        y: { beginAtZero: true }
+      }
     }
   });
 }
-</script>
 
+function renderHeatmap(){
+  const {grid, peak} = heatmapWeekdayHour();
+  const wdNames = ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"];
+  const max = Math.max(1, ...grid.flat());
+  const hours = [...Array(24)].map((_,i)=>i);
+
+  // peak label
+  $("peakTag").textContent = peak.val
+    ? `Pik: ${wdNames[peak.wd]} ${String(peak.hr).padStart(2,"0")}:00 (${peak.val})`
+    : "Pik: —";
+
+  // build table
+  let html = `<table class="heat"><thead><tr><th></th>`;
+  for(const h of hours){
+    if(h%3===0) html += `<th>${h}</th>`;
+    else html += `<th></th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  for(let w=0;w<7;w++){
+    html += `<tr><th>${wdNames[w]}</th>`;
+    for(let h=0;h<24;h++){
+      const v = grid[w][h];
+      const intensity = v / max; // 0..1
+      // Aynı renk ailesi, sadece opaklık değişiyor (temiz ve okunur)
+      const bg = `rgba(29,78,216, ${0.06 + 0.34*intensity})`;
+      const br = `rgba(7,26,54, ${0.08 + 0.16*intensity})`;
+      const color = intensity > 0.55 ? "rgba(255,255,255,.96)" : "var(--text)";
+      html += `<td><div class="cell" style="background:${bg};border-color:${br};color:${color}">${v||""}</div></td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table>`;
+
+  $("heatWrap").innerHTML = html;
+}
+
+function renderTopEventsChart(enrichedEvents){
+  const {labels, values} = topEventsSeries(enrichedEvents);
+  const ctx = $("chartTopEvents").getContext("2d");
+  if(state.charts.topEvents) state.charts.topEvents.destroy();
+
+  state.charts.topEvents = new Chart(ctx, {
+    type: "bar",
+    data: { labels, datasets:[{ label:"Katılım", data: values, borderWidth:1 }] },
+    options: {
+      responsive: true,
+      plugins: { legend:{display:false} },
+      scales: { y: { beginAtZero:true } }
+    }
+  });
+}
+
+function renderNewReturningChart(){
+  const {newCount, returningCount} = newReturningSeries();
+  $("retentionTag").textContent = `Geri gelen oranı: ${newCount+returningCount ? Math.round(100*returningCount/(newCount+returningCount)) : 0}%`;
+
+  const ctx = $("chartNewReturning").getContext("2d");
+  if(state.charts.newReturning) state.charts.newReturning.destroy();
+
+  state.charts.newReturning = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Yeni (aralık içi)", "Tekrar (aralık içi)"],
+      datasets: [{ data: [newCount, returningCount] }]
+    },
+    options: { responsive:true, plugins:{ legend:{ position:"bottom" } } }
+  });
+}
+
+function renderQC(enrichedEvents){
+  // Aggregate QC from attendances
+  let kvkkNo = 0, badEmail = 0, badPhone = 0;
+  const possibleDup = new Map(); // fp -> count
+
+  for(const a of state.attendances){
+    if(!a.kvkk_accepted) kvkkNo++;
+    const em = normEmail(a.email);
+    if(!isValidEmail(em)) badEmail++;
+    const ph = normPhone(a.phone);
+    const digits = ph.replace(/[^\d]/g,"");
+    if(digits.length < 10) badPhone++;
+
+    const fp = em || ph;
+    if(fp){
+      possibleDup.set(fp, (possibleDup.get(fp)||0)+1);
+    }
+  }
+
+  // duplicates (within range)
+  const dupCount = [...possibleDup.values()].filter(c=>c>=2).length;
+
+  const items = [
+    {label:"KVKK onayı olmayan kayıt", val: kvkkNo, sev: kvkkNo? "bad":"good"},
+    {label:"Email format hatası", val: badEmail, sev: badEmail? "warn":"good"},
+    {label:"Telefon format hatası", val: badPhone, sev: badPhone? "warn":"good"},
+    {label:"Muhtemel mükerrer kişi (aralık içi)", val: dupCount, sev: dupCount? "warn":"good"},
+  ];
+
+  const sevPill = (sev,txt)=> `<span class="pill ${sev}">${txt}</span>`;
+
+  $("qcTag").textContent = `Alarm: ${items.filter(x=>x.val>0 && x.sev!=="good").length}`;
+
+  let html = `<div class="projects" style="gap:8px;">`;
+  for(const it of items){
+    const p = it.sev==="bad" ? sevPill("bad","Kritik") : (it.sev==="warn" ? sevPill("warn","Dikkat") : sevPill("good","Temiz"));
+    html += `
+      <div class="eventRow">
+        <div class="eventLeft">
+          <div style="font-weight:1000;">${escapeHtml(it.label)}</div>
+          <div class="muted" style="font-weight:900;font-size:12px;margin-top:3px;">Seçilen aralık</div>
+        </div>
+        <div class="row">
+          ${p}
+          <span class="badge ${it.val? "":"inactive"}">${fmtTR(it.val)}</span>
+        </div>
+      </div>
+    `;
+  }
+  html += `</div>`;
+  $("qcList").innerHTML = html;
+}
+
+function renderCross(enrichedEvents, enrichedProjects){
+  const {names, mat} = crossParticipationTopProjects(enrichedEvents, enrichedProjects);
+  if(names.length === 0){
+    $("crossWrap").innerHTML = `<div class="empty">Yeterli veri yok.</div>`;
+    return;
+  }
+
+  // small matrix table
+  const max = Math.max(1, ...mat.flat());
+  let html = `<div style="overflow:auto;">
+  <table class="table" style="min-width:520px;">
+    <thead><tr><th>Proje</th>`;
+  for(const n of names){
+    html += `<th>${escapeHtml(n.slice(0,10))}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  for(let i=0;i<names.length;i++){
+    html += `<tr><td style="font-weight:1000;">${escapeHtml(names[i])}</td>`;
+    for(let j=0;j<names.length;j++){
+      const v = mat[i][j];
+      const intensity = v / max;
+      const bg = `rgba(6,182,212, ${0.06 + 0.34*intensity})`;
+      html += `<td><div class="cell" style="height:30px;border-radius:10px;background:${bg};">${v||""}</div></td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table></div>`;
+  $("crossWrap").innerHTML = html;
+}
+
+function renderActiveOps(enrichedEvents){
+  const active = enrichedEvents
+    .filter(e=>e.is_active===true)
+    .sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0));
+
+  $("activeCountTag").textContent = `Açık: ${fmtTR(active.length)}`;
+
+  if(active.length === 0){
+    $("activeEvents").innerHTML = `<div class="empty">Açık etkinlik yok.</div>`;
+    return;
+  }
+
+  const baseUrl = location.origin + location.pathname.replace(/dashboard\.html$/,"");
+  // check-in sayfan farklıysa bunu değiştir:
+  const checkinPath = "index.html"; // senin kayıt/check-in sayfan
+  const makeQrLink = (code)=> `${baseUrl}${checkinPath}?event=${encodeURIComponent(code||"")}`;
+
+  let html = ``;
+  for(const e of active.slice(0,10)){
+    const last = e.last_checkin_at ? new Date(e.last_checkin_at).toLocaleString("tr-TR") : "—";
+    const qr = makeQrLink(e.event_code);
+    html += `
+      <div class="eventRow">
+        <div class="eventLeft">
+          <p class="eventTitle">${escapeHtml(e.event_title || "Etkinlik")}</p>
+          <div class="eventSmall">
+            <span>Kod: <b>${escapeHtml(e.event_code || "—")}</b></span>
+            <span>Son check-in: <b>${escapeHtml(last)}</b></span>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn ghost small" data-copy="${escapeHtml(qr)}">QR link</button>
+          <button class="btn small" data-open="${escapeHtml(e.id)}">Detay</button>
+          <span class="badge good">${fmtTR(e.attendee_count)} kişi</span>
+        </div>
+      </div>
+    `;
+  }
+  $("activeEvents").innerHTML = html;
+
+  // bind
+  $("activeEvents").querySelectorAll("[data-copy]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const txt = btn.getAttribute("data-copy");
+      await navigator.clipboard.writeText(txt);
+      setStatus("QR link kopyalandı");
+      await sleep(900);
+      setStatus("Hazır");
+    });
+  });
+  $("activeEvents").querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      openDrawer(btn.getAttribute("data-open"));
+    });
+  });
+}
+
+function renderProjectsHierarchy(enrichedEvents, enrichedProjects){
+  const q = (state.search||"").trim().toLowerCase();
+  const onlyActive = state.onlyActive;
+
+  // group events by project
+  const byP = new Map(); // project_id -> events[]
+  for(const e of enrichedEvents){
+    if(onlyActive && !e.is_active) continue;
+
+    if(q){
+      const hit = (e.event_title||"").toLowerCase().includes(q)
+        || (e.event_code||"").toLowerCase().includes(q);
+      if(!hit) continue;
+    }
+
+    if(!byP.has(e.project_id)) byP.set(e.project_id, []);
+    byP.get(e.project_id).push(e);
+  }
+
+  // compute shown counts
+  let shownProjects = 0;
+  let shownEvents = 0;
+
+  // order projects by attendee_count desc
+  const projOrder = [...enrichedProjects].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0));
+
+  let html = "";
+  for(const p of projOrder){
+    const evs = byP.get(p.id) || [];
+    if(q){
+      // allow project name search too
+      const pHit = (p.project_name||"").toLowerCase().includes(q);
+      if(!pHit && evs.length===0) continue;
+    } else {
+      if(evs.length===0) continue;
+    }
+
+    shownProjects++;
+    shownEvents += evs.length;
+
+    const last = p.last_checkin_at ? new Date(p.last_checkin_at).toLocaleString("tr-TR") : "—";
+    const pTotal = fmtTR(p.attendee_count||0);
+
+    html += `
+      <div class="card projectCard">
+        <div class="projectHead">
+          <div style="min-width:0;">
+            <h3 class="projectName">${escapeHtml(p.project_name || "Proje")}</h3>
+            <div class="projectMeta">
+              <span class="pill">${fmtTR(evs.length)} etkinlik (filtreli)</span>
+              <span class="pill gray">${pTotal} check-in</span>
+              <span class="pill gray">Son: ${escapeHtml(last)}</span>
+            </div>
+          </div>
+        </div>
+    `;
+
+    if(evs.length===0){
+      html += `<div class="empty">Bu filtrelerle etkinlik yok.</div>`;
+    } else {
+      html += `<div class="eventList">`;
+      evs.sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0));
+      for(const e of evs){
+        const lastE = e.last_checkin_at ? new Date(e.last_checkin_at).toLocaleString("tr-TR") : "—";
+        const active = e.is_active===true;
+        const perf = performanceTag(e);
+        html += `
+          <div class="eventRow">
+            <div class="eventLeft">
+              <p class="eventTitle">${escapeHtml(e.event_title || "Etkinlik")}</p>
+              <div class="eventSmall">
+                <span>Kod: <b>${escapeHtml(e.event_code || "—")}</b></span>
+                <span>Son check-in: <b>${escapeHtml(lastE)}</b></span>
+                <span>Tekil kişi: <b>${fmtTR(e.uniq_people||0)}</b></span>
+              </div>
+              <div class="row" style="margin-top:8px;">
+                <span class="pill ${perf.cls}">${perf.label}</span>
+                ${e.qc.kvkkNo ? `<span class="pill bad">KVKK yok: ${fmtTR(e.qc.kvkkNo)}</span>` : `<span class="pill good">KVKK: OK</span>`}
+                ${(e.qc.badEmail||e.qc.badPhone) ? `<span class="pill warn">Format: ${fmtTR(e.qc.badEmail)} mail, ${fmtTR(e.qc.badPhone)} tel</span>` : `<span class="pill good">Format: OK</span>`}
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn ghost small" data-open="${escapeHtml(e.id)}">Detay</button>
+              <span class="badge ${active ? "good":"inactive"}">${fmtTR(e.attendee_count)} kişi</span>
+            </div>
+          </div>
+        `;
+      }
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  $("projects").innerHTML = html || `<div class="empty">Bu filtrelerle gösterilecek proje/etkinlik yok.</div>`;
+  $("shownTag").textContent = `${fmtTR(shownProjects)} proje / ${fmtTR(shownEvents)} etkinlik`;
+
+  // bind open buttons
+  $("projects").querySelectorAll("[data-open]").forEach(btn=>{
+    btn.addEventListener("click", ()=> openDrawer(btn.getAttribute("data-open")));
+  });
+}
+
+/* =========================
+   6) DRAWER (Event detail)
+========================= */
+function showDrawer(show){
+  const m = $("drawerMask");
+  if(show){
+    m.classList.add("show");
+    m.setAttribute("aria-hidden","false");
+  } else {
+    m.classList.remove("show");
+    m.setAttribute("aria-hidden","true");
+  }
+}
+
+$("closeDrawerBtn").addEventListener("click", ()=> showDrawer(false));
+$("drawerMask").addEventListener("click", (e)=>{
+  if(e.target === $("drawerMask")) showDrawer(false);
+});
+
+$("drawerFilter").addEventListener("input", ()=>{
+  renderDrawerTable();
+});
+
+$("csvEventBtn").addEventListener("click", ()=>{
+  if(!state.drawer.event) return;
+  downloadCSVForEvent(state.drawer.event.id);
+});
+
+$("csvAllBtn").addEventListener("click", ()=>{
+  downloadCSV(state.attendances, "bbo_attendances_range.csv");
+});
+
+$("copyQrBtn").addEventListener("click", async ()=>{
+  if(!state.drawer.event) return;
+  const baseUrl = location.origin + location.pathname.replace(/dashboard\.html$/,"");
+  const checkinPath = "index.html";
+  const qr = `${baseUrl}${checkinPath}?event=${encodeURIComponent(state.drawer.event.event_code||"")}`;
+  await navigator.clipboard.writeText(qr);
+  $("drawerStatus").textContent = "QR link kopyalandı";
+  await sleep(900);
+  $("drawerStatus").textContent = `${fmtTR(state.drawer.rows.length)} kayıt`;
+});
+
+async function openDrawer(eventId){
+  const ev = state.byEvent.get(eventId);
+  if(!ev){
+    setStatus("Etkinlik bulunamadı");
+    return;
+  }
+
+  // load attendances for that event (range + event filter)
+  $("drawerTitle").textContent = ev.event_title || "Etkinlik";
+  $("drawerSub").textContent = `Kod: ${ev.event_code || "—"} · Proje: ${state.byProject.get(ev.project_id)?.project_name || "—"}`;
+  $("drawerPill").textContent = "Yükleniyor…";
+  $("drawerLast").textContent = "—";
+  $("drawerStatus").textContent = "Yükleniyor…";
+  $("drawerFilter").value = "";
+  $("drawerTbody").innerHTML = `<tr><td colspan="5"><div class="cell skeleton" style="height:36px;"> </div></td></tr>`;
+  showDrawer(true);
+
+  const sinceISO = toISOStartDaysAgo(state.days);
+  const res = await sb
+    .from("attendances")
+    .select("id, event_id, full_name, phone, email, kvkk_accepted, created_at")
+    .eq("event_id", eventId)
+    .gte("created_at", sinceISO)
+    .order("created_at", { ascending: false })
+    .limit(2000);
+
+  if(res.error){
+    $("drawerStatus").textContent = "Hata: attendances okunamadı";
+    $("drawerTbody").innerHTML = "";
+    return;
+  }
+
+  const rows = res.data || [];
+  state.drawer.event = ev;
+  state.drawer.rows = rows;
+
+  const last = rows[0]?.created_at ? new Date(rows[0].created_at).toLocaleString("tr-TR") : "—";
+  $("drawerPill").textContent = `${fmtTR(rows.length)} kayıt`;
+  $("drawerLast").textContent = `Son: ${last}`;
+  $("drawerStatus").textContent = `${fmtTR(rows.length)} kayıt`;
+
+  renderDrawerTable();
+}
+
+function renderDrawerTable(){
+  const q = ($("drawerFilter").value || "").trim().toLowerCase();
+  const rows = state.drawer.rows || [];
+
+  const filtered = q ? rows.filter(r=>{
+    return (r.full_name||"").toLowerCase().includes(q)
+      || normEmail(r.email).includes(q)
+      || normPhone(r.phone).includes(q);
+  }) : rows;
+
+  $("drawerStatus").textContent = `${fmtTR(filtered.length)} kayıt`;
+
+  const tr = (r)=>{
+    const kv = r.kvkk_accepted ? `<span class="pill good">Evet</span>` : `<span class="pill bad">Hayır</span>`;
+    return `
+      <tr>
+        <td>${escapeHtml(r.full_name||"")}</td>
+        <td>${escapeHtml(normEmail(r.email)||"")}</td>
+        <td>${escapeHtml(normPhone(r.phone)||"")}</td>
+        <td>${kv}</td>
+        <td>${escapeHtml(new Date(r.created_at).toLocaleString("tr-TR"))}</td>
+      </tr>
+    `;
+  };
+
+  $("drawerTbody").innerHTML = filtered.slice(0,1000).map(tr).join("") || `
+    <tr><td colspan="5" class="muted" style="font-weight:950;">Kayıt yok.</td></tr>
+  `;
+}
+
+/* =========================
+   7) CSV
+========================= */
+function downloadCSV(rows, filename){
+  const headers = ["event_id","full_name","email","phone","kvkk_accepted","created_at"];
+  const esc = (v)=>{
+    const s = (v===null || v===undefined) ? "" : String(v);
+    const safe = s.replaceAll('"','""');
+    return `"${safe}"`;
+  };
+
+  const lines = [];
+  lines.push(headers.join(","));
+  for(const r of rows){
+    lines.push([
+      r.event_id,
+      r.full_name,
+      r.email,
+      r.phone,
+      r.kvkk_accepted,
+      r.created_at
+    ].map(esc).join(","));
+  }
+
+  const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function downloadCSVForEvent(eventId){
+  const sinceISO = toISOStartDaysAgo(state.days);
+  const res = await sb
+    .from("attendances")
+    .select("event_id, full_name, email, phone, kvkk_accepted, created_at")
+    .eq("event_id", eventId)
+    .gte("created_at", sinceISO)
+    .order("created_at", { ascending: false })
+    .limit(5000);
+
+  if(res.error){
+    setStatus("CSV için veri çekilemedi");
+    return;
+  }
+  const ev = state.byEvent.get(eventId);
+  const name = (ev?.event_title || "event").replace(/[^\w\-]+/g,"_").slice(0,40);
+  downloadCSV(res.data||[], `bbo_${name}_range.csv`);
+}
+
+/* =========================
+   8) MAIN
+========================= */
+$("range").addEventListener("change", ()=>{
+  state.days = Number($("range").value);
+  loadAll();
+});
+$("search").addEventListener("input", ()=>{
+  state.search = $("search").value;
+  // render-only fast
+  renderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
+});
+$("onlyActive").addEventListener("change", ()=>{
+  state.onlyActive = $("onlyActive").checked;
+  renderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
+});
+
+async function loadAll(){
+  try{
+    state.days = Number($("range").value);
+    state.search = $("search").value || "";
+    state.onlyActive = $("onlyActive").checked;
+
+    setStatus("Hazırlanıyor…");
+
+    await fetchAll();
+
+    const { enrichedEvents, enrichedProjects, todayCount } = buildAggregates();
+
+    // store for quick re-render
+    state._enrichedEvents = enrichedEvents;
+    state._enrichedProjects = enrichedProjects;
+
+    // KPI & analysis
+    renderKPIs({ enrichedEvents, enrichedProjects, todayCount });
+    renderDailyChart();
+    renderHeatmap();
+    renderTopEventsChart(enrichedEvents);
+    renderNewReturningChart();
+    renderQC(enrichedEvents);
+    renderCross(enrichedEvents, enrichedProjects);
+
+    // ops + hierarchy
+    renderActiveOps(enrichedEvents);
+    renderProjectsHierarchy(enrichedEvents, enrichedProjects);
+
+    setStatus(`Yüklendi · ${fmtTR(state.attendances.length)} check-in (son ${state.days} gün)`);
+
+  } catch(err){
+    console.error(err);
+    setStatus("Hata: Supabase URL/KEY, RLS veya tablo/view kontrol et.");
+    // “fail loudly”
+    $("projects").innerHTML = `<div class="empty">Veri yüklenemedi. Console hata mesajını gör.</div>`;
+    $("activeEvents").innerHTML = `<div class="empty">Veri yok.</div>`;
+    $("qcList").innerHTML = `<div class="empty">Veri yok.</div>`;
+    $("crossWrap").innerHTML = `<div class="empty">Veri yok.</div>`;
+  }
+}
+</script>
 </body>
 </html>
