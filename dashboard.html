@@ -3,259 +3,143 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BBO | Admin Dashboard</title>
-
+  <title>BBO | Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    :root{
-      --bg:#f6fbff; --card:#fff; --text:#0b1a33; --muted:rgba(11,26,51,.65);
-      --border:rgba(8,44,92,.12); --shadow:0 12px 34px rgba(2,20,60,.10);
-      --blue:#2563eb; --cyan:#0ea5e9; --slate:#94a3b8; --good:#16a34a; --bad:#b42318;
-    }
+    :root{--bg:#f6fbff;--text:#0b1a33;--muted:rgba(11,26,51,.65);--border:rgba(8,44,92,.12);
+      --shadow:0 12px 34px rgba(2,20,60,.10);--blue:#2563eb;--cyan:#0ea5e9;--slate:#94a3b8;--good:#16a34a;--bad:#b42318;}
     *{box-sizing:border-box}
-    body{
-      margin:0; min-height:100vh; color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:
-        radial-gradient(1200px 600px at 20% 0%, rgba(37,99,235,.14), transparent 55%),
-        radial-gradient(900px 500px at 80% 10%, rgba(14,165,233,.12), transparent 60%),
-        var(--bg);
-    }
-    .hidden{display:none!important}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
+      background:radial-gradient(1200px 600px at 20% 0%, rgba(37,99,235,.14), transparent 55%),
+               radial-gradient(900px 500px at 80% 10%, rgba(14,165,233,.12), transparent 60%), var(--bg);}
     .wrap{max-width:1150px;margin:0 auto;padding:18px;}
-    .card{
-      background:rgba(255,255,255,.88);
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(10px);
-    }
-    .btn{
-      border:none; cursor:pointer; padding:10px 12px; border-radius:14px;
-      font-weight:900; background:var(--blue); color:#fff;
-      box-shadow:0 10px 22px rgba(37,99,235,.22);
-    }
-    .btn.secondary{background:var(--cyan); box-shadow:0 10px 22px rgba(14,165,233,.20);}
-    .btn.ghost{
-      background:rgba(255,255,255,.75); color:var(--text);
-      border:1px solid var(--border); box-shadow:none;
-    }
-
-    /* LOGIN */
-    .loginWrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;}
-    .loginCard{max-width:390px;width:100%;padding:18px;}
-    .brand{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+    .card{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(10px);}
+    .hidden{display:none!important}
     .logo{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg, rgba(37,99,235,.95), rgba(14,165,233,.95));box-shadow:var(--shadow);}
-    h1{margin:0;font-size:18px;line-height:1.2}
-    .sub{margin:2px 0 0;color:var(--muted);font-weight:800;font-size:12px}
-    input{
-      width:100%; padding:12px; border-radius:14px;
-      border:1px solid rgba(8,44,92,.18); font-weight:800; outline:none;
-      background:#fff; margin-bottom:10px;
-    }
-    input:focus{border-color:rgba(37,99,235,.55); box-shadow:0 0 0 4px rgba(37,99,235,.12);}
-    .note{min-height:18px;margin-top:8px;font-size:12px;font-weight:900;color:var(--bad);}
-
-    /* TOP BAR */
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
-    .titleBox h2{margin:0;font-size:18px}
-    .titleBox p{margin:2px 0 0;color:var(--muted);font-weight:800;font-size:12px}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-
-    /* KPI */
+    .btn{border:none;cursor:pointer;padding:10px 12px;border-radius:14px;font-weight:950;background:var(--blue);color:#fff;box-shadow:0 10px 22px rgba(37,99,235,.22);}
+    .btn.secondary{background:var(--cyan);box-shadow:0 10px 22px rgba(14,165,233,.20);}
+    .btn.ghost{background:rgba(255,255,255,.75);color:var(--text);border:1px solid var(--border);box-shadow:none;}
+    input{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(8,44,92,.18);font-weight:900;outline:none;background:#fff;}
+    input:focus{border-color:rgba(37,99,235,.55);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
+    .note{min-height:18px;margin-top:8px;font-size:12px;font-weight:950;color:var(--bad);}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
     .gridKpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;}
     @media(max-width:900px){.gridKpi{grid-template-columns:repeat(2,minmax(0,1fr));}}
     @media(max-width:520px){.gridKpi{grid-template-columns:1fr;}}
     .kpi{padding:14px;}
-    .kpi .label{font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px;}
-    .kpi .value{font-size:22px;font-weight:950;letter-spacing:-.3px;}
-    .kpi .mini{margin-top:6px;font-size:12px;color:var(--muted);font-weight:900;}
-
-    /* FILTERS */
-    .filters{padding:12px;margin-bottom:12px;}
-    .chip{
-      display:flex;align-items:center;gap:8px;
-      padding:10px 12px;border-radius:14px;
-      border:1px solid rgba(8,44,92,.14);
-      background:rgba(255,255,255,.85);
-      font-weight:900;font-size:13px;
-    }
-    .chip input[type="checkbox"]{width:18px;height:18px;}
-    .grow{flex:1;min-width:220px;}
-    .status{padding:10px 12px;border-radius:14px;border:1px solid rgba(8,44,92,.14);background:rgba(255,255,255,.70);font-weight:950;font-size:13px;color:var(--muted);}
-
-    /* PROJECTS */
+    .kpi .label{font-size:12px;color:var(--muted);font-weight:950;margin-bottom:6px;}
+    .kpi .value{font-size:22px;font-weight:950;}
     .projects{display:flex;flex-direction:column;gap:12px;}
     .projectCard{padding:14px;}
-    .projectHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;}
     .projectName{font-size:15px;font-weight:950;margin:0;}
-    .projectMeta{color:var(--muted);font-weight:900;font-size:12px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.10);}
-
     .eventList{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
-    .eventRow{
-      display:flex;justify-content:space-between;align-items:center;gap:10px;
-      padding:10px 12px;border-radius:16px;border:1px solid rgba(8,44,92,.10);
-      background:rgba(255,255,255,.78);
-    }
-    .eventLeft{min-width:0;}
+    .eventRow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;border:1px solid rgba(8,44,92,.10);background:rgba(255,255,255,.78);}
     .eventTitle{font-weight:950;font-size:14px;margin:0 0 4px;}
     .eventSmall{font-size:12px;color:var(--muted);font-weight:900;display:flex;gap:10px;flex-wrap:wrap;}
-    .badge{
-      padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;color:#fff;
-      background:var(--blue);white-space:nowrap;
-    }
+    .badge{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;color:#fff;background:var(--blue);white-space:nowrap;}
     .badge.inactive{background:var(--slate);}
     .badge.good{background:var(--good);}
     .empty{padding:12px;border-radius:16px;border:1px dashed rgba(8,44,92,.22);color:var(--muted);font-weight:900;font-size:13px;background:rgba(255,255,255,.55);}
-
-    .footerNote{margin:14px 2px 2px;font-size:12px;font-weight:900;color:var(--muted);}
   </style>
 </head>
-
 <body>
-  <!-- LOGIN -->
-  <div class="loginWrap" id="loginScreen">
-    <div class="card loginCard">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <h1>BBO Admin Dashboard</h1>
-          <div class="sub">Sadece admin kullanıcılar içeriği görür</div>
-        </div>
+
+<!-- PIN GATE -->
+<div id="pinScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;">
+  <div class="card" style="max-width:390px;width:100%;padding:18px;">
+    <div class="row" style="gap:12px;margin-bottom:10px;">
+      <div class="logo"></div>
+      <div>
+        <div style="font-weight:950;font-size:18px;">Dashboard</div>
+        <div style="color:var(--muted);font-weight:900;font-size:12px;">PIN ile giriş</div>
       </div>
+    </div>
+    <input id="pin" type="password" inputmode="numeric" placeholder="PIN (4-6 haneli)" />
+    <div class="row" style="margin-top:10px;">
+      <button class="btn" id="pinBtn" style="flex:1;">Aç</button>
+      <button class="btn ghost" id="pinClear">Temizle</button>
+    </div>
+    <div class="note" id="pinNote"></div>
+  </div>
+</div>
 
-      <input id="email" type="email" placeholder="E-posta" autocomplete="username" />
-      <input id="password" type="password" placeholder="Şifre" autocomplete="current-password" />
-      <button class="btn" id="loginBtn" style="width:100%;">Giriş</button>
-
-      <div class="note" id="loginNote"></div>
-      <div class="footerNote">“Invalid API key” görürsen: SUPABASE_ANON_KEY yanlış/boş.</div>
+<!-- APP -->
+<div class="wrap hidden" id="app">
+  <div class="topbar">
+    <div class="row" style="gap:12px;">
+      <div class="logo"></div>
+      <div>
+        <div style="font-weight:950;font-size:18px;">Etkinlik & Katılım</div>
+        <div style="color:var(--muted);font-weight:900;font-size:12px;">Proje → Etkinlik → Katılımcı</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="refreshBtn">Yenile</button>
+      <button class="btn secondary" id="lockBtn">Kilitle</button>
     </div>
   </div>
 
-  <!-- APP -->
-  <div class="wrap hidden" id="app">
-    <div class="topbar">
-      <div class="row" style="gap:12px;">
-        <div class="logo"></div>
-        <div class="titleBox">
-          <h2>Etkinlik & Katılım</h2>
-          <p>Proje → Etkinlik → Katılımcı</p>
-        </div>
-      </div>
-      <div class="row">
-        <button class="btn ghost" id="refreshBtn">Yenile</button>
-        <button class="btn secondary" id="logoutBtn">Çıkış</button>
-      </div>
-    </div>
-
-    <div class="gridKpi">
-      <div class="card kpi">
-        <div class="label">Toplam katılımcı</div>
-        <div class="value" id="kpiTotalAtt">—</div>
-        <div class="mini">Tüm zamanlar</div>
-      </div>
-      <div class="card kpi">
-        <div class="label">Bugün check-in</div>
-        <div class="value" id="kpiToday">—</div>
-        <div class="mini">00:00’dan itibaren</div>
-      </div>
-      <div class="card kpi">
-        <div class="label">Toplam etkinlik</div>
-        <div class="value" id="kpiEvents">—</div>
-        <div class="mini">Tüm projeler</div>
-      </div>
-      <div class="card kpi">
-        <div class="label">Aktif etkinlik</div>
-        <div class="value" id="kpiActive">—</div>
-        <div class="mini">Şu an açık</div>
-      </div>
-    </div>
-
-    <div class="card filters">
-      <div class="row">
-        <div class="chip grow">
-          <span>Arama</span>
-          <input id="search" placeholder="Proje / etkinlik ara"
-                 style="border:none;box-shadow:none;padding:0 0 0 8px;font-weight:950;flex:1;min-width:160px;" />
-        </div>
-
-        <label class="chip" style="cursor:pointer;">
-          <input type="checkbox" id="onlyActive" />
-          <span>Sadece aktif etkinlikler</span>
-        </label>
-
-        <div class="status" id="statusText">—</div>
-      </div>
-    </div>
-
-    <div class="projects" id="projects"></div>
-
-    <div class="footerNote">Koruma: Supabase Auth + <b>admins</b> tablosu.</div>
+  <div class="gridKpi">
+    <div class="card kpi"><div class="label">Toplam katılımcı</div><div class="value" id="kpiTotalAtt">—</div></div>
+    <div class="card kpi"><div class="label">Bugün check-in</div><div class="value" id="kpiToday">—</div></div>
+    <div class="card kpi"><div class="label">Toplam etkinlik</div><div class="value" id="kpiEvents">—</div></div>
+    <div class="card kpi"><div class="label">Aktif etkinlik</div><div class="value" id="kpiActive">—</div></div>
   </div>
+
+  <div class="projects" id="projects"></div>
+</div>
 
 <script>
-  // ========= CONFIG =========
+  // === AYARLAR ===
+  const DASHBOARD_PIN = "123456"; // <- BUNU DEĞİŞTİR
   const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXpjbGFyamZud3FuamV4Z3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODk4MTksImV4cCI6MjA4MTM2NTgxOX0.r5RpP-r0P8fbnRP3rt_Bwn12CmMESbXSn86kg4FWzfM";
-
+  const SUPABASE_ANON_KEY = "BURAYA_SUPABASE_ANON_PUBLIC_KEY_YAZ";
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ========= ELEMENTS =========
-  const loginScreen = document.getElementById("loginScreen");
+  // === PIN GATE ===
+  const pinScreen = document.getElementById("pinScreen");
   const app = document.getElementById("app");
-  const loginNote = document.getElementById("loginNote");
+  const pinInput = document.getElementById("pin");
+  const pinNote = document.getElementById("pinNote");
 
-  const kpiTotalAtt = document.getElementById("kpiTotalAtt");
-  const kpiToday = document.getElementById("kpiToday");
-  const kpiEvents = document.getElementById("kpiEvents");
-  const kpiActive = document.getElementById("kpiActive");
-
-  const projectsEl = document.getElementById("projects");
-  const statusText = document.getElementById("statusText");
-  const searchEl = document.getElementById("search");
-  const onlyActiveEl = document.getElementById("onlyActive");
-
-  function showLogin(){ app.classList.add("hidden"); loginScreen.classList.remove("hidden"); }
-  function showApp(){ loginScreen.classList.add("hidden"); app.classList.remove("hidden"); }
-  function setLoginNote(text, ok=false){
-    loginNote.style.color = ok ? "#2563eb" : "#b42318";
-    loginNote.textContent = text || "";
+  function lock(){
+    sessionStorage.removeItem("bbo_dash_ok");
+    app.classList.add("hidden");
+    pinScreen.classList.remove("hidden");
+    pinInput.value = "";
+    pinNote.textContent = "";
   }
+  function unlock(){
+    sessionStorage.setItem("bbo_dash_ok","1");
+    pinScreen.classList.add("hidden");
+    app.classList.remove("hidden");
+  }
+
+  document.getElementById("pinBtn").addEventListener("click", () => {
+    const v = (pinInput.value || "").trim();
+    if(v !== DASHBOARD_PIN){
+      pinNote.textContent = "PIN yanlış.";
+      return;
+    }
+    unlock();
+    loadAll();
+  });
+  document.getElementById("pinClear").addEventListener("click", () => {
+    pinInput.value = "";
+    pinNote.textContent = "";
+  });
+  document.getElementById("lockBtn").addEventListener("click", lock);
+
+  // === UI HELPERS ===
   function escapeHtml(str){
     return (str ?? "").toString().replace(/[&<>"']/g, (m) => ({
       "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
     }[m]));
   }
 
-  // ========= ADMIN CHECK =========
-  async function ensureAdminOrBlock(){
-    const { data: sess } = await sb.auth.getSession();
-    if(!sess.session) return false;
-
-    const { data, error } = await sb
-      .from("admins")
-      .select("user_id")
-      .eq("user_id", sess.session.user.id)
-      .maybeSingle();
-
-    if(error || !data){
-      await sb.auth.signOut();
-      document.body.innerHTML = `
-        <div style="font-family:system-ui;padding:24px;max-width:720px;margin:0 auto;">
-          <h2 style="margin:0 0 10px;">Erişim yok</h2>
-          <p style="margin:0;color:rgba(11,26,51,.75);font-weight:800;">
-            Bu sayfa sadece admin kullanıcılar içindir.
-          </p>
-        </div>`;
-      return false;
-    }
-    return true;
-  }
-
-  // ========= DATA =========
+  // === DATA LOAD ===
   async function loadProjectEventCounts(){
     const { data, error } = await sb
       .from("project_event_counts")
@@ -266,74 +150,50 @@
   }
 
   async function loadTodayCount(){
-    const start = new Date();
-    start.setHours(0,0,0,0);
-    const iso = start.toISOString();
-
+    const start = new Date(); start.setHours(0,0,0,0);
     const { count, error } = await sb
       .from("attendances")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", iso);
-
-    if(error) throw error;
+      .select("id", { count:"exact", head:true })
+      .gte("created_at", start.toISOString());
+    if(error) return 0;
     return count ?? 0;
   }
 
   function renderKpis(rows, todayCount){
     const eventRows = rows.filter(r => r.event_id);
-    const totalAtt = eventRows.reduce((acc, r) => acc + (Number(r.attendee_count) || 0), 0);
-    const totalEvents = new Set(eventRows.map(r => r.event_id)).size;
-    const activeEvents = eventRows.filter(r => r.is_active === true).length;
+    const totalAtt = eventRows.reduce((a,r)=>a+(Number(r.attendee_count)||0),0);
+    const totalEvents = new Set(eventRows.map(r=>r.event_id)).size;
+    const activeEvents = eventRows.filter(r=>r.is_active===true).length;
 
-    kpiTotalAtt.textContent = totalAtt.toLocaleString("tr-TR");
-    kpiEvents.textContent   = totalEvents.toLocaleString("tr-TR");
-    kpiActive.textContent   = activeEvents.toLocaleString("tr-TR");
-    kpiToday.textContent    = (todayCount ?? 0).toLocaleString("tr-TR");
+    document.getElementById("kpiTotalAtt").textContent = totalAtt.toLocaleString("tr-TR");
+    document.getElementById("kpiEvents").textContent   = totalEvents.toLocaleString("tr-TR");
+    document.getElementById("kpiActive").textContent   = activeEvents.toLocaleString("tr-TR");
+    document.getElementById("kpiToday").textContent    = (todayCount||0).toLocaleString("tr-TR");
   }
 
   function renderProjects(rows){
-    const q = (searchEl.value || "").trim().toLowerCase();
-    const onlyActive = !!onlyActiveEl.checked;
-
     const byProject = new Map();
     for(const r of rows){
-      const pName = r.project_name || "Proje (adsız)";
-      if(!byProject.has(pName)) byProject.set(pName, []);
-      if(r.event_id) byProject.get(pName).push(r);
+      const p = r.project_name || "Proje (adsız)";
+      if(!byProject.has(p)) byProject.set(p, []);
+      if(r.event_id) byProject.get(p).push(r);
     }
 
-    projectsEl.innerHTML = "";
+    const root = document.getElementById("projects");
+    root.innerHTML = "";
 
-    let shownProjects = 0;
-    let shownEvents = 0;
-
-    for(const [projectName, originalEvents] of byProject.entries()){
-      let events = [...originalEvents];
-
-      if(onlyActive) events = events.filter(e => e.is_active === true);
-
-      if(q){
-        const pHit = projectName.toLowerCase().includes(q);
-        events = events.filter(e =>
-          pHit ||
-          (e.event_title || "").toLowerCase().includes(q) ||
-          (e.event_code || "").toLowerCase().includes(q)
-        );
-        if(!pHit && events.length === 0) continue;
-      }
-
-      const projTotal = events.reduce((acc, e) => acc + (Number(e.attendee_count) || 0), 0);
-      const projEventCount = events.length;
+    for(const [projectName, events] of byProject.entries()){
+      const projTotal = events.reduce((a,e)=>a+(Number(e.attendee_count)||0),0);
 
       const card = document.createElement("div");
       card.className = "card projectCard";
 
       let html = `
-        <div class="projectHead">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
           <div style="min-width:0;">
             <h3 class="projectName">${escapeHtml(projectName)}</h3>
-            <div class="projectMeta">
-              <span class="pill">${projEventCount} etkinlik</span>
+            <div style="color:var(--muted);font-weight:900;font-size:12px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="pill">${events.length} etkinlik</span>
               <span class="pill">${projTotal.toLocaleString("tr-TR")} katılımcı</span>
             </div>
           </div>
@@ -341,115 +201,58 @@
       `;
 
       if(events.length === 0){
-        html += `<div class="empty">Bu filtrelerle gösterilecek etkinlik yok.</div>`;
-      } else {
+        html += `<div class="empty">Bu projede etkinlik yok.</div>`;
+      }else{
         html += `<div class="eventList">`;
-
-        events.sort((a,b) => (Number(b.attendee_count)||0) - (Number(a.attendee_count)||0));
-
+        events.sort((a,b)=>(Number(b.attendee_count)||0)-(Number(a.attendee_count)||0));
         for(const e of events){
           const active = e.is_active === true;
           const badgeCls = active ? "badge good" : "badge inactive";
           const last = e.last_checkin_at ? new Date(e.last_checkin_at).toLocaleString("tr-TR") : "—";
-
           html += `
             <div class="eventRow">
-              <div class="eventLeft">
-                <p class="eventTitle">${escapeHtml(e.event_title || "Etkinlik")}</p>
+              <div style="min-width:0;">
+                <div class="eventTitle">${escapeHtml(e.event_title || "Etkinlik")}</div>
                 <div class="eventSmall">
                   <span>Kod: <b>${escapeHtml(e.event_code || "—")}</b></span>
                   <span>Son check-in: <b>${escapeHtml(last)}</b></span>
                 </div>
               </div>
-              <div class="${badgeCls}">${Number(e.attendee_count || 0).toLocaleString("tr-TR")} kişi</div>
+              <div class="${badgeCls}">${Number(e.attendee_count||0).toLocaleString("tr-TR")} kişi</div>
             </div>
           `;
-          shownEvents++;
         }
-
         html += `</div>`;
       }
 
       card.innerHTML = html;
-      projectsEl.appendChild(card);
-      shownProjects++;
+      root.appendChild(card);
     }
-
-    statusText.textContent = `${shownProjects} proje / ${shownEvents} etkinlik`;
   }
 
   async function loadAll(){
-    statusText.textContent = "Yükleniyor…";
-    projectsEl.innerHTML = "";
-
     try{
       const rows = await loadProjectEventCounts();
-
-      // Bugün sayısı policy yüzünden patlarsa dashboard yine çalışsın
-      let today = 0;
-      try{ today = await loadTodayCount(); } catch(_) { today = 0; }
-
+      const today = await loadTodayCount();
       renderKpis(rows, today);
       renderProjects(rows);
-      // statusText renderProjects içinde güncelleniyor
-    } catch(err){
+    }catch(err){
       console.error(err);
-      statusText.textContent = "Veri yüklenemedi";
-      projectsEl.innerHTML = `
+      document.getElementById("projects").innerHTML = `
         <div class="card projectCard">
-          <div style="font-weight:950;margin-bottom:6px;">Hata</div>
-          <div style="color:rgba(11,26,51,.75);font-weight:900;font-size:13px;">
-            Supabase anahtarı / RLS / view kontrol et. (Detay: console)
-          </div>
+          <div style="font-weight:950;margin-bottom:6px;">Veri yüklenemedi</div>
+          <div style="color:var(--muted);font-weight:900;font-size:13px;">Supabase URL/KEY, view veya RLS kontrol et.</div>
         </div>`;
     }
   }
 
-  // ========= EVENTS =========
-  document.getElementById("loginBtn").addEventListener("click", async ()=>{
-    setLoginNote("Giriş yapılıyor…", true);
-
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    if(!email || !password){
-      setLoginNote("E-posta ve şifre gerekli.");
-      return;
-    }
-
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if(error){
-      setLoginNote(error.message);
-      return;
-    }
-
-    const ok = await ensureAdminOrBlock();
-    if(!ok) return;
-
-    setLoginNote("");
-    showApp();
-    await loadAll();
-  });
-
-  document.getElementById("logoutBtn").addEventListener("click", async ()=>{
-    await sb.auth.signOut();
-    showLogin();
-  });
-
   document.getElementById("refreshBtn").addEventListener("click", loadAll);
 
-  searchEl.addEventListener("input", ()=>{
-    clearTimeout(window.__srch);
-    window.__srch = setTimeout(loadAll, 220);
-  });
-  onlyActiveEl.addEventListener("change", loadAll);
-
-  // ========= BOOT =========
-  (async ()=>{
-    const ok = await ensureAdminOrBlock();
-    if(!ok){ showLogin(); return; }
-    showApp();
-    await loadAll();
-  })();
+  // === BOOT ===
+  if(sessionStorage.getItem("bbo_dash_ok")==="1"){
+    unlock();
+    loadAll();
+  }
 </script>
 </body>
 </html>
