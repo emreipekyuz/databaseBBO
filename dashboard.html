@@ -1,258 +1,170 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BBO | Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root{--bg:#f6fbff;--text:#0b1a33;--muted:rgba(11,26,51,.65);--border:rgba(8,44,92,.12);
-      --shadow:0 12px 34px rgba(2,20,60,.10);--blue:#2563eb;--cyan:#0ea5e9;--slate:#94a3b8;--good:#16a34a;--bad:#b42318;}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
-      background:radial-gradient(1200px 600px at 20% 0%, rgba(37,99,235,.14), transparent 55%),
-               radial-gradient(900px 500px at 80% 10%, rgba(14,165,233,.12), transparent 60%), var(--bg);}
-    .wrap{max-width:1150px;margin:0 auto;padding:18px;}
-    .card{background:rgba(255,255,255,.88);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(10px);}
-    .hidden{display:none!important}
-    .logo{width:40px;height:40px;border-radius:14px;background:linear-gradient(135deg, rgba(37,99,235,.95), rgba(14,165,233,.95));box-shadow:var(--shadow);}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .btn{border:none;cursor:pointer;padding:10px 12px;border-radius:14px;font-weight:950;background:var(--blue);color:#fff;box-shadow:0 10px 22px rgba(37,99,235,.22);}
-    .btn.secondary{background:var(--cyan);box-shadow:0 10px 22px rgba(14,165,233,.20);}
-    .btn.ghost{background:rgba(255,255,255,.75);color:var(--text);border:1px solid var(--border);box-shadow:none;}
-    input{width:100%;padding:12px;border-radius:14px;border:1px solid rgba(8,44,92,.18);font-weight:900;outline:none;background:#fff;}
-    input:focus{border-color:rgba(37,99,235,.55);box-shadow:0 0 0 4px rgba(37,99,235,.12);}
-    .note{min-height:18px;margin-top:8px;font-size:12px;font-weight:950;color:var(--bad);}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
-    .gridKpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;}
-    @media(max-width:900px){.gridKpi{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    @media(max-width:520px){.gridKpi{grid-template-columns:1fr;}}
-    .kpi{padding:14px;}
-    .kpi .label{font-size:12px;color:var(--muted);font-weight:950;margin-bottom:6px;}
-    .kpi .value{font-size:22px;font-weight:950;}
-    .projects{display:flex;flex-direction:column;gap:12px;}
-    .projectCard{padding:14px;}
-    .projectName{font-size:15px;font-weight:950;margin:0;}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;border:1px solid rgba(37,99,235,.18);background:rgba(37,99,235,.10);}
-    .eventList{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
-    .eventRow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;border:1px solid rgba(8,44,92,.10);background:rgba(255,255,255,.78);}
-    .eventTitle{font-weight:950;font-size:14px;margin:0 0 4px;}
-    .eventSmall{font-size:12px;color:var(--muted);font-weight:900;display:flex;gap:10px;flex-wrap:wrap;}
-    .badge{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:950;color:#fff;background:var(--blue);white-space:nowrap;}
-    .badge.inactive{background:var(--slate);}
-    .badge.good{background:var(--good);}
-    .empty{padding:12px;border-radius:16px;border:1px dashed rgba(8,44,92,.22);color:var(--muted);font-weight:900;font-size:13px;background:rgba(255,255,255,.55);}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BBO | Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+  margin:0;font-family:system-ui;background:#f6fbff;color:#0b1a33;
+}
+.hidden{display:none}
+.container{max-width:1200px;margin:auto;padding:16px}
+.card{
+  background:#fff;border-radius:16px;padding:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  margin-bottom:16px;
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.kpi h3{margin:0;font-size:14px;color:#64748b}
+.kpi div{font-size:28px;font-weight:800}
+button{
+  background:#2563eb;color:#fff;border:none;
+  padding:10px 14px;border-radius:12px;
+  font-weight:700;cursor:pointer
+}
+input{width:100%;padding:12px;border-radius:12px;border:1px solid #cbd5e1}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.event{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-top:8px}
+.badge{background:#2563eb;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px}
+.badge.gray{background:#94a3b8}
+</style>
 </head>
+
 <body>
 
-<!-- PIN GATE -->
-<div id="pinScreen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;">
-  <div class="card" style="max-width:390px;width:100%;padding:18px;">
-    <div class="row" style="gap:12px;margin-bottom:10px;">
-      <div class="logo"></div>
-      <div>
-        <div style="font-weight:950;font-size:18px;">Dashboard</div>
-        <div style="color:var(--muted);font-weight:900;font-size:12px;">PIN ile giriş</div>
-      </div>
-    </div>
-    <input id="pin" type="password" inputmode="numeric" placeholder="PIN (4-6 haneli)" />
-    <div class="row" style="margin-top:10px;">
-      <button class="btn" id="pinBtn" style="flex:1;">Aç</button>
-      <button class="btn ghost" id="pinClear">Temizle</button>
-    </div>
-    <div class="note" id="pinNote"></div>
+<!-- PIN -->
+<div id="pinScreen" class="container">
+  <div class="card" style="max-width:360px;margin:auto">
+    <h2>Dashboard Girişi</h2>
+    <input id="pinInput" type="password" placeholder="PIN">
+    <button onclick="unlock()">Giriş</button>
+    <div id="pinNote" style="color:#b91c1c;font-weight:700"></div>
   </div>
 </div>
 
 <!-- APP -->
-<div class="wrap hidden" id="app">
-  <div class="topbar">
-    <div class="row" style="gap:12px;">
-      <div class="logo"></div>
-      <div>
-        <div style="font-weight:950;font-size:18px;">Etkinlik & Katılım</div>
-        <div style="color:var(--muted);font-weight:900;font-size:12px;">Proje → Etkinlik → Katılımcı</div>
+<div id="app" class="hidden">
+  <div class="container">
+
+    <div class="topbar">
+      <h2>Bir Bulut Olsam – Etkinlik Dashboard</h2>
+      <button onclick="lock()">Kilitle</button>
+    </div>
+
+    <!-- KPI -->
+    <div class="grid">
+      <div class="card kpi"><h3>Toplam Katılımcı</h3><div id="kpiTotal">—</div></div>
+      <div class="card kpi"><h3>Bugün Check-in</h3><div id="kpiToday">—</div></div>
+      <div class="card kpi"><h3>Toplam Etkinlik</h3><div id="kpiEvents">—</div></div>
+      <div class="card kpi"><h3>Aktif Etkinlik</h3><div id="kpiActive">—</div></div>
+    </div>
+
+    <!-- GRAFİKLER -->
+    <div class="grid">
+      <div class="card">
+        <h3>Günlere Göre Katılım</h3>
+        <canvas id="chartDays"></canvas>
+      </div>
+      <div class="card">
+        <h3>Etkinlik Bazlı Katılım</h3>
+        <canvas id="chartEvents"></canvas>
       </div>
     </div>
-    <div class="row">
-      <button class="btn ghost" id="refreshBtn">Yenile</button>
-      <button class="btn secondary" id="lockBtn">Kilitle</button>
-    </div>
-  </div>
 
-  <div class="gridKpi">
-    <div class="card kpi"><div class="label">Toplam katılımcı</div><div class="value" id="kpiTotalAtt">—</div></div>
-    <div class="card kpi"><div class="label">Bugün check-in</div><div class="value" id="kpiToday">—</div></div>
-    <div class="card kpi"><div class="label">Toplam etkinlik</div><div class="value" id="kpiEvents">—</div></div>
-    <div class="card kpi"><div class="label">Aktif etkinlik</div><div class="value" id="kpiActive">—</div></div>
-  </div>
+    <!-- PROJELER -->
+    <div id="projects"></div>
 
-  <div class="projects" id="projects"></div>
+  </div>
 </div>
 
 <script>
-  // === AYARLAR ===
-  const DASHBOARD_PIN = "123456"; // <- BUNU DEĞİŞTİR
-  const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co";
-  const SUPABASE_ANON_KEY = "BURAYA_SUPABASE_ANON_PUBLIC_KEY_YAZ";
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/* === AYARLAR === */
+const DASHBOARD_PIN = "123456"; // DEĞİŞTİR
+const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXpjbGFyamZud3FuamV4Z3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODk4MTksImV4cCI6MjA4MTM2NTgxOX0.r5RpP-r0P8fbnRP3rt_Bwn12CmMESbXSn86kg4FWzfM";
 
-  // === PIN GATE ===
-  const pinScreen = document.getElementById("pinScreen");
-  const app = document.getElementById("app");
-  const pinInput = document.getElementById("pin");
-  const pinNote = document.getElementById("pinNote");
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  function lock(){
-    sessionStorage.removeItem("bbo_dash_ok");
-    app.classList.add("hidden");
-    pinScreen.classList.remove("hidden");
-    pinInput.value = "";
-    pinNote.textContent = "";
+/* === PIN === */
+function unlock(){
+  if(document.getElementById("pinInput").value !== DASHBOARD_PIN){
+    document.getElementById("pinNote").innerText="PIN yanlış";
+    return;
   }
-  function unlock(){
-    sessionStorage.setItem("bbo_dash_ok","1");
-    pinScreen.classList.add("hidden");
-    app.classList.remove("hidden");
-  }
+  sessionStorage.setItem("bbo_ok","1");
+  document.getElementById("pinScreen").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  loadAll();
+}
+function lock(){
+  sessionStorage.clear();
+  location.reload();
+}
+if(sessionStorage.getItem("bbo_ok")==="1") unlock();
 
-  document.getElementById("pinBtn").addEventListener("click", () => {
-    const v = (pinInput.value || "").trim();
-    if(v !== DASHBOARD_PIN){
-      pinNote.textContent = "PIN yanlış.";
-      return;
-    }
-    unlock();
-    loadAll();
+/* === LOAD === */
+async function loadAll(){
+  const { data } = await sb.from("project_event_counts").select("*");
+  renderKPI(data);
+  renderProjects(data);
+  renderCharts(data);
+}
+
+/* === KPI === */
+function renderKPI(rows){
+  const total = rows.reduce((a,r)=>a+(r.attendee_count||0),0);
+  document.getElementById("kpiTotal").innerText=total;
+  document.getElementById("kpiEvents").innerText=new Set(rows.map(r=>r.event_id)).size;
+  document.getElementById("kpiActive").innerText=rows.filter(r=>r.is_active).length;
+  document.getElementById("kpiToday").innerText="—";
+}
+
+/* === PROJECTS === */
+function renderProjects(rows){
+  const root=document.getElementById("projects");
+  root.innerHTML="";
+  const map={};
+  rows.forEach(r=>{
+    if(!map[r.project_name]) map[r.project_name]=[];
+    map[r.project_name].push(r);
   });
-  document.getElementById("pinClear").addEventListener("click", () => {
-    pinInput.value = "";
-    pinNote.textContent = "";
-  });
-  document.getElementById("lockBtn").addEventListener("click", lock);
 
-  // === UI HELPERS ===
-  function escapeHtml(str){
-    return (str ?? "").toString().replace(/[&<>"']/g, (m) => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[m]));
-  }
-
-  // === DATA LOAD ===
-  async function loadProjectEventCounts(){
-    const { data, error } = await sb
-      .from("project_event_counts")
-      .select("*")
-      .order("project_name", { ascending: true });
-    if(error) throw error;
-    return data || [];
-  }
-
-  async function loadTodayCount(){
-    const start = new Date(); start.setHours(0,0,0,0);
-    const { count, error } = await sb
-      .from("attendances")
-      .select("id", { count:"exact", head:true })
-      .gte("created_at", start.toISOString());
-    if(error) return 0;
-    return count ?? 0;
-  }
-
-  function renderKpis(rows, todayCount){
-    const eventRows = rows.filter(r => r.event_id);
-    const totalAtt = eventRows.reduce((a,r)=>a+(Number(r.attendee_count)||0),0);
-    const totalEvents = new Set(eventRows.map(r=>r.event_id)).size;
-    const activeEvents = eventRows.filter(r=>r.is_active===true).length;
-
-    document.getElementById("kpiTotalAtt").textContent = totalAtt.toLocaleString("tr-TR");
-    document.getElementById("kpiEvents").textContent   = totalEvents.toLocaleString("tr-TR");
-    document.getElementById("kpiActive").textContent   = activeEvents.toLocaleString("tr-TR");
-    document.getElementById("kpiToday").textContent    = (todayCount||0).toLocaleString("tr-TR");
-  }
-
-  function renderProjects(rows){
-    const byProject = new Map();
-    for(const r of rows){
-      const p = r.project_name || "Proje (adsız)";
-      if(!byProject.has(p)) byProject.set(p, []);
-      if(r.event_id) byProject.get(p).push(r);
-    }
-
-    const root = document.getElementById("projects");
-    root.innerHTML = "";
-
-    for(const [projectName, events] of byProject.entries()){
-      const projTotal = events.reduce((a,e)=>a+(Number(e.attendee_count)||0),0);
-
-      const card = document.createElement("div");
-      card.className = "card projectCard";
-
-      let html = `
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
-          <div style="min-width:0;">
-            <h3 class="projectName">${escapeHtml(projectName)}</h3>
-            <div style="color:var(--muted);font-weight:900;font-size:12px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
-              <span class="pill">${events.length} etkinlik</span>
-              <span class="pill">${projTotal.toLocaleString("tr-TR")} katılımcı</span>
-            </div>
-          </div>
-        </div>
-      `;
-
-      if(events.length === 0){
-        html += `<div class="empty">Bu projede etkinlik yok.</div>`;
-      }else{
-        html += `<div class="eventList">`;
-        events.sort((a,b)=>(Number(b.attendee_count)||0)-(Number(a.attendee_count)||0));
-        for(const e of events){
-          const active = e.is_active === true;
-          const badgeCls = active ? "badge good" : "badge inactive";
-          const last = e.last_checkin_at ? new Date(e.last_checkin_at).toLocaleString("tr-TR") : "—";
-          html += `
-            <div class="eventRow">
-              <div style="min-width:0;">
-                <div class="eventTitle">${escapeHtml(e.event_title || "Etkinlik")}</div>
-                <div class="eventSmall">
-                  <span>Kod: <b>${escapeHtml(e.event_code || "—")}</b></span>
-                  <span>Son check-in: <b>${escapeHtml(last)}</b></span>
-                </div>
-              </div>
-              <div class="${badgeCls}">${Number(e.attendee_count||0).toLocaleString("tr-TR")} kişi</div>
-            </div>
-          `;
-        }
-        html += `</div>`;
-      }
-
-      card.innerHTML = html;
-      root.appendChild(card);
-    }
-  }
-
-  async function loadAll(){
-    try{
-      const rows = await loadProjectEventCounts();
-      const today = await loadTodayCount();
-      renderKpis(rows, today);
-      renderProjects(rows);
-    }catch(err){
-      console.error(err);
-      document.getElementById("projects").innerHTML = `
-        <div class="card projectCard">
-          <div style="font-weight:950;margin-bottom:6px;">Veri yüklenemedi</div>
-          <div style="color:var(--muted);font-weight:900;font-size:13px;">Supabase URL/KEY, view veya RLS kontrol et.</div>
+  for(const p in map){
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`<h3>${p}</h3>`;
+    map[p].forEach(e=>{
+      card.innerHTML+=`
+        <div class="event">
+          <strong>${e.event_title}</strong><br>
+          <span class="badge ${e.is_active?"":"gray"}">${e.attendee_count} kişi</span>
         </div>`;
+    });
+    root.appendChild(card);
+  }
+}
+
+/* === CHARTS === */
+function renderCharts(rows){
+  const byEvent={};
+  rows.forEach(r=>{
+    byEvent[r.event_title]=(byEvent[r.event_title]||0)+r.attendee_count;
+  });
+
+  new Chart(document.getElementById("chartEvents"),{
+    type:"bar",
+    data:{
+      labels:Object.keys(byEvent),
+      datasets:[{data:Object.values(byEvent),backgroundColor:"#2563eb"}]
     }
-  }
-
-  document.getElementById("refreshBtn").addEventListener("click", loadAll);
-
-  // === BOOT ===
-  if(sessionStorage.getItem("bbo_dash_ok")==="1"){
-    unlock();
-    loadAll();
-  }
+  });
+}
 </script>
+
 </body>
 </html>
