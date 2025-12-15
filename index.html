@@ -1,188 +1,643 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bir Bulut Olsam | Etkinlik Kayıt</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bir Bulut Olsam | Etkinlik Kaydı</title>
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa, #e6ebf5);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+    :root{
+      --bg0:#070A12;
+      --bg1:#0B1022;
+      --glass: rgba(255,255,255,.08);
+      --glass2: rgba(255,255,255,.12);
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+      --muted2: rgba(255,255,255,.55);
+      --accent1:#7C5CFF;
+      --accent2:#00D4FF;
+      --accent3:#FF5CF1;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --shadow: 0 30px 70px rgba(0,0,0,.45);
+      --radius: 26px;
     }
 
-    .card {
-      background: #fff;
-      width: 100%;
-      max-width: 420px;
-      border-radius: 20px;
-      padding: 28px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-      animation: fadeIn 0.6s ease;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 15% 15%, rgba(124,92,255,.30), transparent 55%),
+        radial-gradient(900px 600px at 85% 20%, rgba(0,212,255,.22), transparent 55%),
+        radial-gradient(900px 700px at 60% 90%, rgba(255,92,241,.18), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+    /* Animated aurora blobs */
+    .aurora{
+      position:fixed; inset:-120px;
+      pointer-events:none;
+      filter: blur(60px);
+      opacity:.75;
+      z-index:0;
+    }
+    .blob{
+      position:absolute;
+      width:520px; height:520px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(124,92,255,.55), transparent 60%);
+      mix-blend-mode: screen;
+      animation: float1 11s ease-in-out infinite;
+    }
+    .blob.b2{
+      width:600px;height:600px;
+      left:55%; top:8%;
+      background: radial-gradient(circle at 30% 30%, rgba(0,212,255,.42), transparent 62%);
+      animation: float2 13s ease-in-out infinite;
+    }
+    .blob.b3{
+      width:560px;height:560px;
+      left:25%; top:55%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,92,241,.34), transparent 62%);
+      animation: float3 15s ease-in-out infinite;
+    }
+    @keyframes float1{
+      0%,100%{transform:translate(6%, 8%) scale(1)}
+      50%{transform:translate(18%, 2%) scale(1.08)}
+    }
+    @keyframes float2{
+      0%,100%{transform:translate(-8%, 8%) scale(1)}
+      50%{transform:translate(-18%, -6%) scale(1.10)}
+    }
+    @keyframes float3{
+      0%,100%{transform:translate(10%, -10%) scale(1)}
+      50%{transform:translate(-10%, -18%) scale(1.08)}
     }
 
-    h1 {
-      font-size: 22px;
-      margin: 0 0 8px;
-      font-weight: 700;
+    /* layout */
+    .wrap{
+      position:relative;
+      z-index:1;
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px 16px 42px;
     }
 
-    p.subtitle {
-      margin: 0 0 24px;
-      color: #555;
+    .panel{
+      width: min(980px, 100%);
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:18px;
+      align-items:stretch;
+    }
+
+    @media (max-width: 880px){
+      .panel{grid-template-columns:1fr; gap:14px;}
+    }
+
+    /* left hero */
+    .hero{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      padding: 26px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .tag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-weight:700;
+      letter-spacing:.2px;
+      font-size:12px;
+      color: var(--muted);
+    }
+
+    .hero h1{
+      margin:16px 0 10px;
+      font-size: 34px;
+      line-height:1.08;
+      letter-spacing: -.6px;
+    }
+
+    .hero p{
+      margin:0 0 18px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height:1.6;
+      max-width: 46ch;
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:16px;
+    }
+    @media (max-width: 520px){
+      .stats{grid-template-columns:1fr; }
+    }
+    .stat{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      border-radius: 18px;
+      padding: 14px 14px;
+    }
+    .stat .k{
+      font-weight:800;
+      font-size:18px;
+      margin-bottom:4px;
+    }
+    .stat .v{
+      font-size:12px;
+      color: var(--muted2);
+      line-height:1.4;
+    }
+
+    .spark{
+      position:absolute;
+      inset:auto -40px -40px auto;
+      width:260px; height:260px;
+      background: radial-gradient(circle at 30% 30%, rgba(0,212,255,.35), transparent 60%),
+                  radial-gradient(circle at 70% 60%, rgba(124,92,255,.32), transparent 65%);
+      filter: blur(6px);
+      transform: rotate(15deg);
+      opacity:.9;
+      pointer-events:none;
+    }
+
+    /* right form card */
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .cardHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .cardHeader h2{
+      margin:0;
+      font-size: 18px;
+      letter-spacing:-.2px;
+    }
+    .cardHeader .mini{
+      margin-top:4px;
+      color: var(--muted2);
+      font-size: 12px;
+    }
+
+    .progress{
+      height:10px;
+      width:100%;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .bar{
+      height:100%;
+      width: 34%;
+      border-radius:999px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent1), var(--accent3));
+      filter:saturate(1.1);
+      animation: shimmer 3.2s ease-in-out infinite;
+    }
+    @keyframes shimmer{
+      0%,100%{transform:translateX(0)}
+      50%{transform:translateX(12%)}
+    }
+
+    form{margin-top:14px}
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 520px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .field{
+      position:relative;
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color: var(--muted);
+      margin: 10px 0 6px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .input{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(5,8,20,.35);
+      backdrop-filter: blur(10px);
+    }
+    .input:focus-within{
+      border-color: rgba(0,212,255,.35);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.12);
+    }
+    .input svg{
+      width:18px;height:18px;
+      opacity:.85;
+      flex:0 0 auto;
+    }
+    select, input[type="text"], input[type="email"], input[type="tel"]{
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      color: var(--text);
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:.1px;
+    }
+    select option{color:#111}
+
+    .kvkk{
+      margin-top:12px;
+      padding: 14px 14px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .kvkk input{margin-top:3px; transform: scale(1.15);}
+    .kvkk .t{
+      font-size:12px;
+      color: var(--muted);
+      line-height:1.5;
+      font-weight:600;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+    }
+    @media (max-width: 520px){
+      .actions{flex-direction:column}
+    }
+
+    .btn{
+      width:100%;
+      border:0;
+      cursor:pointer;
+      border-radius: 18px;
+      padding: 14px 14px;
       font-size: 14px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      color: #08101F;
+      background: linear-gradient(90deg, rgba(0,212,255,1), rgba(124,92,255,1), rgba(255,92,241,1));
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      transition: transform .08s ease, filter .2s ease;
+    }
+    .btn:active{transform: translateY(1px) scale(.99)}
+    .btn:hover{filter:saturate(1.05)}
+
+    .ghost{
+      width:100%;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 18px;
+      padding: 14px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor:pointer;
     }
 
-    label {
-      display: block;
-      margin-top: 16px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #333;
+    .note{
+      margin-top:10px;
+      font-size:12px;
+      color: var(--muted2);
+      line-height:1.5;
     }
 
-    select, input {
-      width: 100%;
-      margin-top: 6px;
-      padding: 14px 12px;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      font-size: 15px;
+    /* success screen */
+    .success{
+      display:none;
+      text-align:center;
+      padding: 26px 10px 8px;
+      animation: pop .35s ease;
     }
-
-    select:focus, input:focus {
-      outline: none;
-      border-color: #6c8cff;
-      box-shadow: 0 0 0 2px rgba(108,140,255,0.15);
+    @keyframes pop{
+      from{transform:scale(.98); opacity:0}
+      to{transform:scale(1); opacity:1}
     }
-
-    .kvkk {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      margin-top: 18px;
-      font-size: 13px;
-      color: #444;
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 12px 14px;
+      border-radius: 999px;
+      border:1px solid rgba(34,197,94,.35);
+      background: rgba(34,197,94,.10);
+      color: rgba(220,255,235,.95);
+      font-weight:900;
+      margin-bottom: 14px;
     }
-
-    .kvkk input {
-      margin-top: 3px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      background: linear-gradient(135deg, #6c8cff, #8f6cff);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.95;
-    }
-
-    .success {
-      text-align: center;
-      padding: 20px 10px;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .success h2 {
+    .success h3{
+      margin: 0 0 8px;
       font-size: 22px;
-      margin-bottom: 10px;
+      letter-spacing:-.2px;
+    }
+    .success p{
+      margin: 0;
+      color: var(--muted);
+      font-weight:600;
+      line-height:1.6;
     }
 
-    .success p {
-      color: #555;
-      font-size: 15px;
+    .tinylinks{
+      margin-top:14px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight:800;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      text-decoration:none;
+    }
+
+    /* subtle grid overlay */
+    .gridOverlay{
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size: 42px 42px;
+      opacity:.25;
+      mask-image: radial-gradient(circle at 30% 25%, rgba(0,0,0,1), rgba(0,0,0,.2), transparent 70%);
+      pointer-events:none;
     }
   </style>
 </head>
+
 <body>
+  <div class="aurora">
+    <div class="blob" style="left:6%; top:10%;"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
 
-<div class="card" id="formCard">
-  <h1>Etkinlik Kaydı</h1>
-  <p class="subtitle">Birlikte güzel bir deneyime başlıyoruz ☁️</p>
+  <div class="wrap">
+    <div class="panel">
 
-  <form id="registerForm">
-    <label>Etkinlik</label>
-    <select required>
-      <option value="">Etkinlik seç</option>
-      <option>Örnek Etkinlik – Gençlik Buluşması</option>
-    </select>
+      <!-- HERO -->
+      <section class="hero" aria-label="Bilgilendirme">
+        <div class="gridOverlay"></div>
+        <span class="tag">
+          ☁️ Bir Bulut Olsam Derneği
+          <span style="opacity:.55">•</span>
+          <span style="opacity:.9">Etkinlik Kaydı</span>
+        </span>
 
-    <label>Ad Soyad</label>
-    <input type="text" required placeholder="Adın Soyadın" />
+        <h1>Birlikte daha iyi hissettiren bir alan.</h1>
+        <p>
+          Etkinliğe geldin mi? Harika. 30 saniyede kaydını alalım.
+          Sonra sadece anın tadı kalsın.
+        </p>
 
-    <label>Telefon</label>
-    <input type="tel" required placeholder="05xx xxx xx xx" />
+        <div class="stats">
+          <div class="stat">
+            <div class="k">Hızlı</div>
+            <div class="v">Telefonla aç, doldur, bitti.</div>
+          </div>
+          <div class="stat">
+            <div class="k">Net</div>
+            <div class="v">Zorunlu alanlar, temiz veri.</div>
+          </div>
+          <div class="stat">
+            <div class="k">Nazik</div>
+            <div class="v">İyi ki geldin, hoş geldin.</div>
+          </div>
+        </div>
 
-    <label>E-posta</label>
-    <input type="email" required placeholder="ornek@mail.com" />
+        <div class="spark"></div>
+      </section>
 
-    <div class="kvkk">
-      <input type="checkbox" required />
-      <span>
-        KVKK kapsamında kişisel verilerimin etkinlik iletişimi amacıyla
-        işlenmesini kabul ediyorum.
-      </span>
+      <!-- FORM -->
+      <section class="card" aria-label="Kayıt formu">
+        <div class="gridOverlay"></div>
+
+        <div id="formView">
+          <div class="cardHeader">
+            <div>
+              <h2>Kayıt Formu</h2>
+              <div class="mini">Tüm alanlar zorunlu • KVKK onayı gerekir</div>
+              <div class="progress" aria-hidden="true"><div class="bar"></div></div>
+            </div>
+            <div style="opacity:.8; font-weight:900; font-size:12px; text-align:right;">
+              <div style="color:var(--muted2)">Süre</div>
+              <div>~30 sn</div>
+            </div>
+          </div>
+
+          <form id="registerForm" novalidate>
+            <div class="field">
+              <label>Etkinlik</label>
+              <div class="input">
+                <!-- icon -->
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 3v3M17 3v3M4.5 8.5h15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M6.5 21h11c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-11c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+                <select id="eventSelect" required>
+                  <option value="">Etkinlik seç</option>
+                  <option value="ornek">Örnek Etkinlik – Gençlik Buluşması</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="field">
+                <label>Ad Soyad</label>
+                <div class="input">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4.5 20c1.6-4 13.4-4 15 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <input id="fullName" type="text" placeholder="Adın Soyadın" required />
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Telefon</label>
+                <div class="input">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  </svg>
+                  <input id="phone" type="tel" inputmode="tel" placeholder="05xx xxx xx xx" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>E-posta</label>
+              <div class="input">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M4.5 7.5h15v9a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-9z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M4.5 7.5 12 13l7.5-5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <input id="email" type="email" inputmode="email" placeholder="ornek@mail.com" required />
+              </div>
+            </div>
+
+            <div class="kvkk">
+              <input id="kvkk" type="checkbox" required />
+              <div class="t">
+                KVKK kapsamında, etkinlik iletişimi amacıyla kişisel verilerimin işlenmesini kabul ediyorum.
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn" id="submitBtn" type="submit">Kaydı Tamamla</button>
+              <button class="ghost" type="button" id="resetBtn">Temizle</button>
+            </div>
+
+            <div class="note" id="note">
+              Not: Bu sayfa şu an demo modunda. Veritabanına bağlayınca “Kaydı Tamamla” gerçek kayıt yapacak.
+            </div>
+          </form>
+        </div>
+
+        <!-- SUCCESS -->
+        <div class="success" id="successView">
+          <div class="badge">✅ Kayıt alındı</div>
+          <h3>İyi ki geldin. Hoş geldin! 🎉</h3>
+          <p>
+            Burada olman cidden değerli. Şimdi sadece etkinliğin tadını çıkar.
+          </p>
+
+          <div class="tinylinks">
+            <a class="chip" href="#" onclick="return false;">Instagram</a>
+            <a class="chip" href="#" onclick="return false;">Gönüllü Ol</a>
+            <a class="chip" href="#" onclick="return false;">Bir Bulut Olsam</a>
+          </div>
+
+          <div style="margin-top:16px;">
+            <button class="ghost" id="newEntryBtn" type="button">Yeni Kayıt Al</button>
+          </div>
+        </div>
+
+      </section>
     </div>
+  </div>
 
-    <button type="submit">Kaydı Tamamla</button>
-  </form>
-</div>
+  <script>
+    const form = document.getElementById("registerForm");
+    const formView = document.getElementById("formView");
+    const successView = document.getElementById("successView");
 
-<div class="card success" id="successCard" style="display:none;">
-  <h2>İyi ki geldin! 🎉</h2>
-  <p>
-    Kaydın başarıyla alındı.<br>
-    Burada olman çok güzel, hoş geldin ☁️
-  </p>
-</div>
+    const submitBtn = document.getElementById("submitBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const newEntryBtn = document.getElementById("newEntryBtn");
 
-<script>
-  const form = document.getElementById("registerForm");
-  const formCard = document.getElementById("formCard");
-  const successCard = document.getElementById("successCard");
+    function confettiBurst(){
+      // İki aşamalı daha "şaşalı" konfeti
+      confetti({
+        particleCount: 120,
+        spread: 75,
+        startVelocity: 45,
+        origin: { y: 0.75 }
+      });
+      setTimeout(() => confetti({
+        particleCount: 80,
+        spread: 95,
+        startVelocity: 35,
+        scalar: 0.9,
+        origin: { y: 0.65 }
+      }), 180);
+    }
 
-  form.addEventListener("submit", function(e) {
-    e.preventDefault();
+    function showSuccess(){
+      confettiBurst();
+      formView.style.display = "none";
+      successView.style.display = "block";
+    }
 
-    // Confetti patlat
-    confetti({
-      particleCount: 150,
-      spread: 80,
-      origin: { y: 0.6 }
+    function showForm(){
+      successView.style.display = "none";
+      formView.style.display = "block";
+      form.reset();
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      // Zorunlu alanlar HTML5 ile zaten zorunlu, ama burada bir kez daha net kontrol:
+      const eventVal = document.getElementById("eventSelect").value.trim();
+      const fullName = document.getElementById("fullName").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const kvkk = document.getElementById("kvkk").checked;
+
+      if(!eventVal || !fullName || !phone || !email || !kvkk){
+        // Tarayıcı doğrulamasını tetikle
+        form.reportValidity();
+        return;
+      }
+
+      // Şu an DEMO: Supabase'e yazmıyoruz. (Bağlayınca burası kayıt atacak.)
+      showSuccess();
     });
 
-    // Formu gizle, başarıyı göster
-    formCard.style.display = "none";
-    successCard.style.display = "block";
-  });
-</script>
+    resetBtn.addEventListener("click", () => {
+      form.reset();
+      document.getElementById("fullName").focus();
+    });
 
+    newEntryBtn.addEventListener("click", () => showForm());
+  </script>
 </body>
 </html>
