@@ -2,21 +2,22 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Bir Bulut Olsam | Etkinlik Kaydı</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
     :root{
-      --bg0:#f6fbff;
-      --bg1:#eaf4ff;
+      --bg0:#f6fbff; --bg1:#eaf4ff;
       --glass: rgba(255,255,255,.78);
       --glass2: rgba(255,255,255,.62);
       --stroke: rgba(8,44,92,.12);
@@ -25,9 +26,7 @@
       --muted: rgba(11,26,51,.72);
       --muted2: rgba(11,26,51,.56);
 
-      --accent1:#0ea5e9;   /* sky */
-      --accent2:#2563eb;   /* blue */
-      --accent3:#60a5fa;   /* light blue */
+      --accent1:#0ea5e9; --accent2:#2563eb; --accent3:#60a5fa;
 
       --shadow: 0 24px 60px rgba(2, 20, 60, .12);
       --radius: 22px;
@@ -47,120 +46,56 @@
       overflow-x:hidden;
     }
 
-    /* Soft moving aurora for “şaşalı ama temiz” */
-    .aurora{
-      position:fixed; inset:-120px;
-      pointer-events:none;
-      filter: blur(50px);
-      opacity:.75;
-      z-index:0;
-    }
-    .blob{
-      position:absolute;
-      width:520px; height:520px;
-      border-radius: 50%;
+    .aurora{position:fixed; inset:-120px; pointer-events:none; filter: blur(50px); opacity:.75; z-index:0;}
+    .blob{position:absolute; width:520px; height:520px; border-radius:50%;
       background: radial-gradient(circle at 30% 30%, rgba(14,165,233,.42), transparent 62%);
-      mix-blend-mode: multiply;
-      animation: float1 12s ease-in-out infinite;
-    }
-    .blob.b2{
-      width:600px;height:600px;
-      left:55%; top:8%;
+      mix-blend-mode:multiply; animation: float1 12s ease-in-out infinite;}
+    .blob.b2{width:600px;height:600px; left:55%; top:8%;
       background: radial-gradient(circle at 30% 30%, rgba(37,99,235,.28), transparent 64%);
-      animation: float2 14s ease-in-out infinite;
-    }
-    .blob.b3{
-      width:560px;height:560px;
-      left:25%; top:55%;
+      animation: float2 14s ease-in-out infinite;}
+    .blob.b3{width:560px;height:560px; left:25%; top:55%;
       background: radial-gradient(circle at 30% 30%, rgba(96,165,250,.30), transparent 66%);
-      animation: float3 16s ease-in-out infinite;
-    }
+      animation: float3 16s ease-in-out infinite;}
     @keyframes float1{0%,100%{transform:translate(6%, 8%) scale(1)}50%{transform:translate(16%, 2%) scale(1.08)}}
     @keyframes float2{0%,100%{transform:translate(-8%, 8%) scale(1)}50%{transform:translate(-16%, -6%) scale(1.08)}}
     @keyframes float3{0%,100%{transform:translate(10%, -10%) scale(1)}50%{transform:translate(-10%, -16%) scale(1.06)}}
 
-    .wrap{
-      position:relative;
-      z-index:1;
-      min-height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:22px 14px 32px;
-    }
+    .wrap{position:relative; z-index:1; min-height:100%;
+      display:flex; align-items:center; justify-content:center; padding:22px 14px 32px;}
 
-    /* Mobil-öncelikli: tek kolon default */
-    .panel{
-      width: min(980px, 100%);
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:14px;
-      align-items:stretch;
-    }
-    /* Desktop’ta iki kolon */
+    .panel{width:min(980px,100%); display:grid; grid-template-columns:1fr; gap:14px;}
     @media (min-width: 920px){
-      .panel{
-        grid-template-columns: 1.05fr .95fr;
-        gap:18px;
-      }
+      .panel{grid-template-columns:1.05fr .95fr; gap:18px;}
       .wrap{padding:28px 16px 42px;}
     }
 
-    .hero{
+    .hero, .card{
       border-radius: var(--radius);
       background: linear-gradient(180deg, var(--glass), var(--glass2));
       border: 1px solid var(--stroke);
       box-shadow: var(--shadow);
-      padding: 18px;
-      position:relative;
       overflow:hidden;
     }
 
+    .hero{padding:18px;}
+    @media (min-width: 920px){ .hero{padding:26px;} }
+
     .tag{
-      display:inline-flex;
-      gap:8px;
-      align-items:center;
-      padding:10px 12px;
-      border-radius: 999px;
+      display:inline-flex; gap:8px; align-items:center;
+      padding:10px 12px; border-radius:999px;
       border:1px solid rgba(8,44,92,.12);
       background: rgba(255,255,255,.7);
-      font-weight:800;
-      letter-spacing:.2px;
-      font-size:12px;
-      color: var(--muted);
+      font-weight:900; letter-spacing:.2px; font-size:12px; color: var(--muted);
     }
 
-    .hero h1{
-      margin:14px 0 10px;
-      font-size: 24px;
-      line-height:1.10;
-      letter-spacing: -.5px;
-    }
-    @media (min-width: 920px){
-      .hero h1{font-size: 34px;}
-      .hero{padding: 26px;}
-    }
+    .hero h1{margin:14px 0 10px; font-size:24px; line-height:1.10; letter-spacing:-.5px;}
+    @media (min-width: 920px){ .hero h1{font-size:34px;} }
 
-    .hero p{
-      margin:0 0 12px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height:1.65;
-      max-width: 52ch;
-    }
-    @media (min-width: 920px){
-      .hero p{font-size: 15px; margin:0 0 18px;}
-    }
+    .hero p{margin:0 0 12px; color: var(--muted); font-size:14px; line-height:1.65; max-width: 54ch;}
+    @media (min-width: 920px){ .hero p{font-size:15px; margin:0 0 18px;} }
 
-    .stats{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:10px;
-      margin-top:14px;
-    }
-    @media (min-width: 520px){
-      .stats{grid-template-columns: repeat(3, 1fr);}
-    }
+    .stats{display:grid; grid-template-columns:1fr; gap:10px; margin-top:14px;}
+    @media (min-width: 520px){ .stats{grid-template-columns: repeat(3, 1fr);} }
 
     .stat{
       border:1px solid rgba(8,44,92,.10);
@@ -168,221 +103,99 @@
       border-radius: 18px;
       padding: 12px 12px;
     }
-    .stat .k{font-weight:900; font-size:16px; margin-bottom:4px;}
-    .stat .v{font-size:12px; color: var(--muted2); line-height:1.45;}
+    .stat .k{font-weight:1000; font-size:16px; margin-bottom:4px;}
+    .stat .v{font-size:12px; color: var(--muted2); line-height:1.45; font-weight:700;}
 
-    .card{
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, var(--glass), rgba(255,255,255,.55));
-      border: 1px solid var(--stroke);
-      box-shadow: var(--shadow);
-      padding: 16px;
-      position:relative;
-      overflow:hidden;
-    }
-    @media (min-width: 920px){
-      .card{padding: 22px;}
-    }
+    .card{padding:16px;}
+    @media (min-width: 920px){ .card{padding:22px;} }
 
-    .cardHeader{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:12px;
-    }
-    .cardHeader h2{
-      margin:0;
-      font-size: 16px;
-      letter-spacing:-.2px;
-    }
-    .cardHeader .mini{
-      margin-top:4px;
-      color: var(--muted2);
-      font-size: 12px;
-      font-weight:700;
-    }
+    .cardHeader{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;}
+    .cardHeader h2{margin:0; font-size:16px; letter-spacing:-.2px;}
+    .cardHeader .mini{margin-top:4px; color: var(--muted2); font-size:12px; font-weight:800;}
 
-    .progress{
-      height:10px;
-      width:100%;
-      border-radius:999px;
-      border:1px solid rgba(8,44,92,.10);
-      background: rgba(255,255,255,.55);
-      overflow:hidden;
-      margin-top:10px;
-    }
-    .bar{
-      height:100%;
-      width: 38%;
-      border-radius:999px;
+    .progress{height:10px; width:100%; border-radius:999px; border:1px solid rgba(8,44,92,.10);
+      background: rgba(255,255,255,.55); overflow:hidden; margin-top:10px;}
+    .bar{height:100%; width: 38%; border-radius:999px;
       background: linear-gradient(90deg, var(--accent1), var(--accent2), var(--accent3));
-      animation: shimmer 3.2s ease-in-out infinite;
-    }
+      animation: shimmer 3.2s ease-in-out infinite;}
     @keyframes shimmer{0%,100%{transform:translateX(0)}50%{transform:translateX(12%)}}
 
     form{margin-top:10px}
+    .grid{display:grid; grid-template-columns:1fr; gap:10px;}
+    @media (min-width: 520px){ .grid{grid-template-columns:1fr 1fr;} }
 
-    /* Mobil: tek kolon */
-    .grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:10px;
-    }
-    @media (min-width: 520px){
-      .grid{grid-template-columns:1fr 1fr;}
-    }
-
-    .field label{
-      display:block;
-      font-size:12px;
-      color: var(--muted);
-      margin: 10px 0 6px;
-      font-weight:900;
-      letter-spacing:.2px;
-    }
+    .field label{display:block; font-size:12px; color: var(--muted); margin:10px 0 6px; font-weight:1000; letter-spacing:.2px;}
 
     .input{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding: 14px 14px;
-      border-radius: 16px;
+      display:flex; align-items:center; gap:10px;
+      padding:14px 14px; border-radius:16px;
       border:1px solid rgba(8,44,92,.12);
       background: rgba(255,255,255,.72);
       backdrop-filter: blur(10px);
     }
-    .input:focus-within{
-      border-color: rgba(37,99,235,.35);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.10);
-    }
+    .input:focus-within{border-color: rgba(37,99,235,.35); box-shadow: 0 0 0 3px rgba(37,99,235,.10);}
     .input svg{width:18px;height:18px;opacity:.85;flex:0 0 auto;color:#0b2b57}
 
     select, input[type="text"], input[type="email"], input[type="tel"]{
-      width:100%;
-      border:0;
-      outline:none;
-      background:transparent;
-      color: var(--text);
-      font-size:15px;
-      font-weight:700;
-      letter-spacing:.1px;
+      width:100%; border:0; outline:none; background:transparent;
+      color: var(--text); font-size:15px; font-weight:800; letter-spacing:.1px;
     }
     select option{color:#111}
 
     .kvkk{
-      margin-top:10px;
-      padding: 14px 14px;
-      border-radius: 18px;
+      margin-top:10px; padding:14px 14px; border-radius:18px;
       border:1px solid rgba(8,44,92,.10);
       background: rgba(255,255,255,.66);
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
+      display:flex; gap:12px; align-items:flex-start;
     }
     .kvkk input{margin-top:3px; transform: scale(1.18);}
-    .kvkk .t{
-      font-size:12px;
-      color: var(--muted);
-      line-height:1.55;
-      font-weight:700;
-    }
+    .kvkk .t{font-size:12px; color: var(--muted); line-height:1.55; font-weight:800;}
 
-    .actions{
-      display:flex;
-      gap:10px;
-      margin-top:12px;
-      flex-direction:column;
-    }
-    @media (min-width: 520px){
-      .actions{flex-direction:row;}
-    }
+    .actions{display:flex; gap:10px; margin-top:12px; flex-direction:column;}
+    @media (min-width: 520px){ .actions{flex-direction:row;} }
 
     .btn{
-      width:100%;
-      border:0;
-      cursor:pointer;
-      border-radius: 18px;
-      padding: 15px 14px;
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing:.2px;
-      color: #ffffff;
-      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      width:100%; border:0; cursor:pointer; border-radius:18px;
+      padding:15px 14px; font-size:15px; font-weight:1000; letter-spacing:.2px;
+      color:#fff; background: linear-gradient(90deg, var(--accent1), var(--accent2));
       box-shadow: 0 16px 40px rgba(37,99,235,.18);
       transition: transform .08s ease, filter .2s ease;
     }
+    .btn:disabled{opacity:.65; cursor:not-allowed;}
     .btn:active{transform: translateY(1px) scale(.99)}
     .btn:hover{filter:saturate(1.05)}
 
     .ghost{
-      width:100%;
-      border:1px solid rgba(8,44,92,.14);
-      background: rgba(255,255,255,.72);
-      color: var(--text);
-      border-radius: 18px;
-      padding: 15px 14px;
-      font-size: 15px;
-      font-weight: 900;
-      cursor:pointer;
+      width:100%; border:1px solid rgba(8,44,92,.14);
+      background: rgba(255,255,255,.72); color: var(--text);
+      border-radius:18px; padding:15px 14px; font-size:15px; font-weight:1000; cursor:pointer;
     }
 
-    .note{
-      margin-top:10px;
-      font-size:12px;
-      color: var(--muted2);
-      line-height:1.55;
-      font-weight:700;
-    }
+    .note{margin-top:10px; font-size:12px; color: var(--muted2); line-height:1.55; font-weight:800;}
+    .note.err{color:#b42318}
+    .note.ok{color:#2563eb}
 
-    .success{
-      display:none;
-      text-align:center;
-      padding: 22px 8px 6px;
-      animation: pop .35s ease;
-    }
+    .success{display:none; text-align:center; padding:22px 8px 6px; animation: pop .35s ease;}
     @keyframes pop{from{transform:scale(.985); opacity:0}to{transform:scale(1); opacity:1}}
     .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding: 12px 14px;
-      border-radius: 999px;
+      display:inline-flex; align-items:center; gap:10px;
+      padding:12px 14px; border-radius:999px;
       border:1px solid rgba(37,99,235,.22);
       background: rgba(37,99,235,.10);
       color: rgba(11,26,51,.92);
-      font-weight:1000;
-      margin-bottom: 12px;
+      font-weight:1100; margin-bottom:12px;
     }
-    .success h3{
-      margin: 0 0 8px;
-      font-size: 20px;
-      letter-spacing:-.2px;
-    }
-    @media (min-width: 920px){
-      .success h3{font-size: 22px;}
-    }
-    .success p{
-      margin: 0;
-      color: var(--muted);
-      font-weight:750;
-      line-height:1.65;
-      font-size:14px;
-    }
+    .success h3{margin:0 0 8px; font-size:20px; letter-spacing:-.2px;}
+    @media (min-width: 920px){ .success h3{font-size:22px;} }
+    .success p{margin:0; color: var(--muted); font-weight:850; line-height:1.65; font-size:14px;}
 
-    .tinylinks{
-      margin-top:14px;
-      display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+    .tinylinks{margin-top:14px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;}
     .chip{
       border:1px solid rgba(8,44,92,.14);
       background: rgba(255,255,255,.76);
       color: var(--text);
-      font-weight:950;
-      padding: 11px 12px;
+      font-weight:1100;
+      padding:11px 12px;
       border-radius: 999px;
       font-size: 12px;
       text-decoration:none;
@@ -401,44 +214,39 @@
     <div class="panel">
 
       <!-- HERO -->
-      <section class="hero" aria-label="Bilgilendirme">
-        <span class="tag">
-          ☁️ Bir Bulut Olsam Derneği
-          <span style="opacity:.55">•</span>
-          <span style="opacity:.9">Etkinlik Kaydı</span>
-        </span>
+      <section class="hero">
+        <span class="tag">☁️ Bir Bulut Olsam Derneği <span style="opacity:.55">•</span> Etkinlik Kaydı</span>
 
         <h1>Hoş geldin. Kaydını alalım.</h1>
-        <p>
-          10 saniyede doldur, geç. Biz veriyi düzenli tutalım; sen etkinliğin tadını çıkar.
-        </p>
+        <p>Kısa bir kayıt alıyoruz; sonra direkt etkinliğe geçiyoruz.</p>
 
+        <!-- 3'lü kutu: dernek anlatımı -->
         <div class="stats">
           <div class="stat">
-            <div class="k">Hızlı</div>
-            <div class="v">Mobil uyumlu, büyük butonlar.</div>
+            <div class="k">Topluluk</div>
+            <div class="v">Bursa’da (Nilüfer ağırlıklı) gençlerin bir araya geldiği, tanıştığı ve arkadaş edindiği alan.</div>
           </div>
           <div class="stat">
-            <div class="k">Temiz</div>
-            <div class="v">Zorunlu alanlar, KVKK onayı.</div>
+            <div class="k">Deneyim</div>
+            <div class="v">Atölyeler, buluşmalar ve küçük ekip işleriyle “iyi ki gelmişim” dedirten deneyimler.</div>
           </div>
           <div class="stat">
-            <div class="k">Mavi</div>
-            <div class="v">Sade ve ferah görünüm.</div>
+            <div class="k">Gönüllülük</div>
+            <div class="v">İstersen gönüllü olup üretime katılırsın; bazen yerel, bazen uluslararası işler.</div>
           </div>
         </div>
       </section>
 
       <!-- FORM -->
-      <section class="card" aria-label="Kayıt formu">
+      <section class="card">
         <div id="formView">
           <div class="cardHeader">
             <div>
               <h2>Kayıt Formu</h2>
               <div class="mini">Tüm alanlar zorunlu</div>
-              <div class="progress" aria-hidden="true"><div class="bar"></div></div>
+              <div class="progress"><div class="bar"></div></div>
             </div>
-            <div style="opacity:.85; font-weight:1000; font-size:12px; text-align:right;">
+            <div style="opacity:.85; font-weight:1100; font-size:12px; text-align:right;">
               <div style="color:var(--muted2)">Süre</div>
               <div>~10 sn</div>
             </div>
@@ -453,8 +261,7 @@
                   <path d="M6.5 21h11c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-11c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                 </svg>
                 <select id="eventSelect" required>
-                  <option value="">Etkinlik seç</option>
-                  <option value="ornek">Örnek Etkinlik – Gençlik Buluşması</option>
+                  <option value="">Etkinlik yükleniyor...</option>
                 </select>
               </div>
             </div>
@@ -496,9 +303,7 @@
 
             <div class="kvkk">
               <input id="kvkk" type="checkbox" required />
-              <div class="t">
-                KVKK kapsamında, etkinlik iletişimi amacıyla kişisel verilerimin işlenmesini kabul ediyorum.
-              </div>
+              <div class="t">KVKK kapsamında, etkinlik iletişimi amacıyla kişisel verilerimin işlenmesini kabul ediyorum.</div>
             </div>
 
             <div class="actions">
@@ -506,9 +311,7 @@
               <button class="ghost" type="button" id="resetBtn">Temizle</button>
             </div>
 
-            <div class="note" id="note">
-              Bu sayfa şu an demo modunda. Bir sonraki adımda Supabase’e bağlayıp gerçek kayıt alacağız.
-            </div>
+            <div class="note" id="note">Etkinlikler yükleniyor…</div>
           </form>
         </div>
 
@@ -516,10 +319,7 @@
         <div class="success" id="successView">
           <div class="badge">✅ Kayıt alındı</div>
           <h3>İyi ki geldin. Hoş geldin! 🎉</h3>
-          <p>
-            Kaydın alındı. Etkinliğin tadını çıkar.<br>
-            İstersen bizi Instagram’dan stalklayabilir ya da gönüllü olabilirsin ☁️
-          </p>
+          <p>Kaydın alındı. Etkinliğin tadını çıkar.<br>İstersen Instagram’dan stalkla ya da gönüllü ol ☁️</p>
 
           <div class="tinylinks">
             <a class="chip" href="https://www.instagram.com/birbulutolsamdernegi/" target="_blank" rel="noopener">Instagram</a>
@@ -530,17 +330,36 @@
             <button class="ghost" id="newEntryBtn" type="button">Yeni Kayıt Al</button>
           </div>
         </div>
-
       </section>
+
     </div>
   </div>
 
   <script>
+    // =========================
+    // 1) Supabase bilgilerini buraya gir
+    // =========================
+    const SUPABASE_URL = "https://XXXXXXXXXXXX.supabase.co";
+    const SUPABASE_ANON_KEY = "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY";
+    // NOT: service_role key KULLANMA. Sadece anon key.
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     const form = document.getElementById("registerForm");
     const formView = document.getElementById("formView");
     const successView = document.getElementById("successView");
     const resetBtn = document.getElementById("resetBtn");
     const newEntryBtn = document.getElementById("newEntryBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const note = document.getElementById("note");
+
+    const eventSelect = document.getElementById("eventSelect");
+
+    function setNote(msg, type){
+      note.classList.remove("err","ok");
+      if(type) note.classList.add(type);
+      note.textContent = msg;
+    }
 
     function confettiBurst(){
       confetti({ particleCount: 120, spread: 70, startVelocity: 42, origin: { y: 0.78 } });
@@ -558,34 +377,113 @@
       successView.style.display = "none";
       formView.style.display = "block";
       form.reset();
-      document.getElementById("eventSelect").focus();
+      submitBtn.disabled = false;
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    form.addEventListener("submit", (e) => {
+    function formatEventLabel(e){
+      // İstersen burada tarih/konum ekleyebilirsin
+      return e.title;
+    }
+
+    async function loadEvents(){
+      try{
+        setNote("Etkinlikler yükleniyor…");
+        eventSelect.innerHTML = `<option value="">Etkinlik seç</option>`;
+
+        const { data, error } = await sb
+          .from("events")
+          .select("id,title,code,is_active,created_at")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
+
+        if(error) throw error;
+
+        if(!data || data.length === 0){
+          setNote("Aktif etkinlik bulunamadı. (Supabase’de events tablosundan etkinliği aktif yaptığından emin ol.)", "err");
+          return;
+        }
+
+        for(const e of data){
+          const opt = document.createElement("option");
+          opt.value = e.id; // attendances.event_id buraya gidecek
+          opt.textContent = formatEventLabel(e);
+          opt.dataset.code = e.code;
+          eventSelect.appendChild(opt);
+        }
+
+        // URL parametresiyle otomatik seç (opsiyonel ama sahada iyi)
+        const params = new URLSearchParams(location.search);
+        const code = params.get("event");
+        if(code){
+          const match = Array.from(eventSelect.options).find(o => (o.dataset.code || "") === code);
+          if(match){
+            eventSelect.value = match.value;
+            // İstersen dropdown’ı kilitle:
+            // eventSelect.disabled = true;
+          } else {
+            setNote("Bu QR koduna ait etkinlik bulunamadı. Etkinlik kodunu kontrol edin.", "err");
+            return;
+          }
+        }
+
+        setNote("Hazır. Bilgilerini girip kaydı tamamlayabilirsin.", "ok");
+      }catch(err){
+        console.error(err);
+        setNote("Etkinlikler yüklenemedi. Supabase URL/KEY veya RLS/policy kontrol et.", "err");
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const eventVal = document.getElementById("eventSelect").value.trim();
+      const eventId = eventSelect.value.trim();
       const fullName = document.getElementById("fullName").value.trim();
       const phone = document.getElementById("phone").value.trim();
-      const email = document.getElementById("email").value.trim();
+      const email = document.getElementById("email").value.trim().toLowerCase();
       const kvkk = document.getElementById("kvkk").checked;
 
-      if(!eventVal || !fullName || !phone || !email || !kvkk){
+      if(!eventId || !fullName || !phone || !email || !kvkk){
         form.reportValidity();
         return;
       }
 
-      // DEMO: Supabase'e yazmıyoruz (sonraki adımda bağlayacağız)
-      showSuccess();
+      submitBtn.disabled = true;
+      setNote("Kaydediliyor…");
+
+      try{
+        const payload = {
+          event_id: eventId,
+          full_name: fullName,
+          phone: phone,
+          email: email,
+          kvkk_consent: true,
+          kvkk_consent_at: new Date().toISOString()
+        };
+
+        const { error } = await sb.from("attendances").insert(payload);
+        if(error) throw error;
+
+        setNote("");
+        showSuccess();
+      }catch(err){
+        console.error(err);
+        submitBtn.disabled = false;
+        setNote("Kayıt alınamadı. İnternet / Supabase policy / alanlar kontrol.", "err");
+      }
     });
 
     resetBtn.addEventListener("click", () => {
       form.reset();
-      document.getElementById("eventSelect").focus();
+      submitBtn.disabled = false;
+      setNote("Form temizlendi.", "ok");
+      eventSelect.focus();
     });
 
     newEntryBtn.addEventListener("click", () => showForm());
+
+    // Başlat
+    loadEvents();
   </script>
 </body>
 </html>
