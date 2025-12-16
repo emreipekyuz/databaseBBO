@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap | Yönetim Paneli</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root{
+            --bg0:#f6fbff; --bg1:#eaf4ff;
+            --text:#0b1a33; --muted: rgba(11,26,51,.72);
+            --accent1:#0ea5e9; --accent2:#2563eb;
+            --radius: 12px;
+            --stroke: rgba(8,44,92,.12);
+        }
+        body{
+            font-family: "Manrope", system-ui, sans-serif;
+            background: linear-gradient(180deg, var(--bg0), var(--bg1));
+            color: var(--text);
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            margin: 0;
+        }
+        .login-container{
+            background: white; padding: 40px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(2, 20, 60, .08);
+            border: 1px solid var(--stroke); width: 100%; max-width: 380px;
+        }
+        h2{text-align: center; margin-top: 0; color: var(--accent2);}
+        label{display: block; margin-bottom: 6px; font-weight: 700; font-size: 14px;}
+        input[type="email"], input[type="password"]{
+            width: 100%; padding: 12px; margin-bottom: 20px;
+            border: 1px solid var(--stroke); border-radius: 8px;
+            font-size: 16px;
+        }
+        button{
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: 800; cursor: pointer;
+            color: white; background: linear-gradient(90deg, var(--accent1), var(--accent2));
+            transition: opacity 0.1s;
+        }
+        button:hover{opacity: 0.9;}
+        .error-message{color: #dc2626; text-align: center; margin-top: 15px; font-weight: 700;}
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Yönetici Girişi</h2>
+        <form id="login-form">
+            <label for="email">E-posta</label>
+            <input type="email" id="email" required>
+
+            <label for="password">Şifre</label>
+            <input type="password" id="password" required>
+
+            <button type="submit">Giriş Yap</button>
+            <div id="error-message" class="error-message" style="display:none;"></div>
+        </form>
+    </div>
+
+    <script>
+        // =========================
+        // 1) Supabase Bilgilerini Girin
+        // =========================
+        const SUPABASE_URL = "https://iqrmitiszsyewgcsvuvs.supabase.co"; // Kendi URL'nizle değiştirin
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU1OTR9.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc"; // Kendi ANON KEY'inizle değiştirin
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const form = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('error-message');
+
+        // =========================
+        // 2) Oturum Kontrolü
+        // =========================
+        async function checkSession() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                // Zaten giriş yapmışsa, Dashboard'a yönlendir
+                window.location.href = "dashboard.html"; 
+            }
+        }
+
+        // =========================
+        // 3) Giriş İşlemi
+        // =========================
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.style.display = 'none';
+
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                errorMessage.textContent = 'Giriş başarısız: ' + error.message;
+                errorMessage.style.display = 'block';
+                console.error(error);
+            } else {
+                // Giriş başarılı, Dashboard'a yönlendir
+                window.location.href = "dashboard.html";
+            }
+        });
+
+        // Sayfa yüklendiğinde oturum kontrolünü yap
+        checkSession();
+    </script>
+</body>
+</html>
