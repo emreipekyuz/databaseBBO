@@ -13,30 +13,22 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
   <style>
-    /* CSS kodunuz (Önceki versiyonda verilen stil) buraya gelmelidir. */
-    /* Yer kazanmak için burada tekrar etmiyorum, lütfen eski dosyanızdaki tüm <style> içeriğini buraya kopyalayın. */
-
+    /* =================================================================
+        STİL TANIMLAMALARI
+        ================================================================= */
     :root{
       --bg0:#f6fbff; --bg1:#eaf4ff;
-      --glass: rgba(255,255,255,.78);
-      --glass2: rgba(255,255,255,.62);
-      --stroke: rgba(8,44,92,.12);
-
-      --text:#0b1a33;
-      --muted: rgba(11,26,51,.72);
-      --muted2: rgba(11,26,51,.56);
-
+      --glass: rgba(255,255,255,.78); --glass2: rgba(255,255,255,.62);
+      --stroke: rgba(8,44,92,.12); --text:#0b1a33; 
+      --muted: rgba(11,26,51,.72); --muted2: rgba(11,26,51,.56);
       --accent1:#0ea5e9; --accent2:#2563eb; --accent3:#60a5fa;
-
-      --shadow: 0 24px 60px rgba(2, 20, 60, .12);
-      --radius: 22px;
+      --shadow: 0 24px 60px rgba(2, 20, 60, .12); --radius: 22px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-        margin:0;
-        font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-        color:var(--text);
+        margin:0; font-family:"Manrope",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+        color:var(--text); 
         background:
             radial-gradient(900px 520px at 15% 15%, rgba(14,165,233,.25), transparent 55%),
             radial-gradient(800px 520px at 85% 20%, rgba(37,99,235,.18), transparent 55%),
@@ -45,101 +37,52 @@
         overflow-x:hidden;
     }
 
-    .aurora{position:fixed; inset:-120px; pointer-events:none; filter: blur(50px); opacity:.75; z-index:0;}
-    .blob{position:absolute; width:520px; height:520px; border-radius:50%;
-        background: radial-gradient(circle at 30% 30%, rgba(14,165,233,.42), transparent 62%);
-        mix-blend-mode:multiply; animation: float1 12s ease-in-out infinite;}
-    .blob.b2{width:600px;height:600px; left:55%; top:8%;
-        background: radial-gradient(circle at 30% 30%, rgba(37,99,235,.28), transparent 64%);
-        animation: float2 14s ease-in-out infinite;}
-    .blob.b3{width:560px;height:560px; left:25%; top:55%;
-        background: radial-gradient(circle at 30% 30%, rgba(96,165,250,.30), transparent 66%);
-        animation: float3 16s ease-in-out infinite;}
-    @keyframes float1{0%,100%{transform:translate(6%, 8%) scale(1)}50%{transform:translate(16%, 2%) scale(1.08)}}
-    @keyframes float2{0%,100%{transform:translate(-8%, 8%) scale(1)}50%{transform:translate(-16%, -6%) scale(1.08)}}
-    @keyframes float3{0%,100%{transform:translate(10%, -10%) scale(1)}50%{transform:translate(-10%, -16%) scale(1.06)}}
-
-    .header{
-        max-width:1300px; margin:0 auto; padding:22px 16px 0;
-        display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
-        position:relative; z-index:1;
-    }
+    .header{max-width:1300px; margin:0 auto; padding:22px 16px 0; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; position:relative; z-index:1;}
     .header h1{margin:0; font-size:20px; letter-spacing:-.2px;}
-    .header .tag{
-        display:inline-flex; gap:8px; align-items:center;
-        padding:8px 10px; border-radius:999px;
-        border:1px solid rgba(8,44,92,.12);
-        background: rgba(255,255,255,.7);
-        font-weight:900; letter-spacing:.2px; font-size:12px; color: var(--muted);
-    }
-    .header .actions{
-        display:flex; gap:10px; align-items:center; flex:0 0 auto;
-    }
-    .header .btn{
-        padding:10px 14px; border:0; cursor:pointer; border-radius:14px;
-        font-size:14px; font-weight:1000; letter-spacing:.2px;
-        color:#fff; background: linear-gradient(90deg, var(--accent1), var(--accent2));
-        box-shadow: 0 8px 24px rgba(37,99,235,.18);
-        transition: transform .08s ease;
-    }
+    .header .tag{display:inline-flex; gap:8px; align-items:center; padding:8px 10px; border-radius:999px; border:1px solid rgba(8,44,92,.12); background: rgba(255,255,255,.7); font-weight:900; letter-spacing:.2px; font-size:12px; color: var(--muted);}
+    .header .actions{display:flex; gap:10px; align-items:center; flex:0 0 auto;}
+    .header .btn{padding:10px 14px; border:0; cursor:pointer; border-radius:14px; font-size:14px; font-weight:1000; letter-spacing:.2px; color:#fff; background: linear-gradient(90deg, var(--accent1), var(--accent2)); box-shadow: 0 8px 24px rgba(37,99,235,.18); transition: transform .08s ease;}
     .header .btn:active{transform: translateY(1px) scale(.99)}
-
-    .wrap{
-        position:relative; z-index:1; min-height:calc(100% - 70px);
-        max-width:1300px; margin:0 auto; padding:20px 16px 32px;
-    }
-
+    .wrap{position:relative; z-index:1; min-height:calc(100% - 70px); max-width:1300px; margin:0 auto; padding:20px 16px 32px;}
     .grid{display:grid; grid-template-columns: repeat(12, 1fr); gap:14px;}
     .col-12{grid-column: span 12;}
-    @media (min-width: 768px){
-        .col-6{grid-column: span 6;}
-        .col-4{grid-column: span 4;}
-        .col-3{grid-column: span 3;}
-    }
-
-    .card{
-        border-radius: var(--radius);
-        background: linear-gradient(180deg, var(--glass), var(--glass2));
-        border: 1px solid var(--stroke);
-        box-shadow: var(--shadow);
-        overflow:hidden;
-    }
+    @media (min-width: 768px){.col-6{grid-column: span 6;}.col-4{grid-column: span 4;}.col-3{grid-column: span 3;}}
+    .card{border-radius: var(--radius); background: linear-gradient(180deg, var(--glass), var(--glass2)); border: 1px solid var(--stroke); box-shadow: var(--shadow); overflow:hidden;}
     .pad{padding:18px;}
-    .full{padding:0;}
-
-    .kpi{
-        display:flex; flex-direction:column; justify-content:space-between;
-        min-height:90px;
-    }
+    .kpi{display:flex; flex-direction:column; justify-content:space-between; min-height:90px;}
     .kpi .label{font-size:12px; color:var(--muted); font-weight:1000; letter-spacing:.2px; margin-bottom:4px;}
     .kpi .value{font-size:32px; font-weight:900; line-height:1.1; letter-spacing:-1px;}
     .kpi .sub{font-size:12px; color:var(--muted2); margin-top:4px; font-weight:700;}
-
-    .chart canvas{height:300px;}
-    .chartContainer{padding:18px;}
-
+    .chart canvas{height:300px;} .chartContainer{padding:18px;}
     .tableWrap{overflow-x:auto;}
     table{width:100%; border-collapse: collapse; font-size:14px;}
-    thead th{
-        text-align:left; padding:12px 18px; color:var(--muted); font-size:12px;
-        font-weight:1000; letter-spacing:.2px; border-bottom:1px solid var(--stroke);
-    }
-    tbody td{
-        padding:12px 18px; border-bottom:1px solid rgba(8,44,92,.06);
-        font-weight:700; color:var(--text);
-    }
+    thead th{text-align:left; padding:12px 18px; color:var(--muted); font-size:12px; font-weight:1000; letter-spacing:.2px; border-bottom:1px solid var(--stroke);}
+    tbody td{padding:12px 18px; border-bottom:1px solid rgba(8,44,92,.06); font-weight:700; color:var(--text);}
     tbody tr:last-child td{border-bottom:0;}
     tbody tr:nth-child(even){background: rgba(255,255,255,.4);}
-
     .loading{text-align:center; padding:50px; color:var(--muted); font-weight:800;}
-    .error{color:#b42318; padding:20px 18px; text-align:center; font-weight:800;}
-    .badge{
-        padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 900;
-        display: inline-block;
+    .error{color:#b42318; padding:20px 18px; text-align:center; font-weight:800; display:none;}
+    
+    /* Gömülü Login Stilleri */
+    .login-container{
+        background: white; padding: 40px; border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(2, 20, 60, .08);
+        border: 1px solid var(--stroke); width: 100%; max-width: 380px;
+        margin: 10vh auto; 
     }
-    .badge-active{background:#dbeafe; color:#2563eb;}
-    .badge-inactive{background:#fecaca; color:#dc2626;}
-
+    .login-container h2{text-align: center; margin-top: 0; color: var(--accent2);}
+    .login-container label{display: block; margin-bottom: 6px; font-weight: 700; font-size: 14px;}
+    .login-container input{
+        width: 100%; padding: 12px; margin-bottom: 20px;
+        border: 1px solid var(--stroke); border-radius: 8px; font-size: 16px;
+    }
+    .login-container button{
+        width: 100%; padding: 12px; border: none; border-radius: 8px;
+        font-size: 16px; font-weight: 800; cursor: pointer;
+        color: white; background: linear-gradient(90deg, var(--accent1), var(--accent2));
+        transition: opacity 0.1s;
+    }
+    .login-error{color: #dc2626; text-align: center; margin-top: 15px; font-weight: 700; display: none;}
   </style>
 </head>
 
@@ -155,17 +98,34 @@
       <span class="tag">☁️ Yönetim Paneli</span>
       <h1>Etkinlik Dashboard</h1>
     </div>
-    <div class="actions">
+    <div class="actions" id="headerActions" style="display:none;">
       <button id="logoutBtn" class="btn">Çıkış Yap</button>
     </div>
   </header>
 
   <main class="wrap">
     
-    <div id="loading" class="loading">Veriler yükleniyor...</div>
-    <div id="errorMsg" class="error" style="display:none;"></div>
+    <div id="loading" class="loading">Yetkilendirme Kontrol Ediliyor...</div>
+    <div id="errorMsg" class="error"></div>
 
-    <div id="content" style="display:none;">
+    <div id="loginSection" style="display:none;">
+        <div class="login-container">
+            <h2>Giriş Yap</h2>
+            <form id="login-form">
+                <label for="email">E-posta</label>
+                <input type="email" id="login-email" required>
+
+                <label for="password">Şifre</label>
+                <input type="password" id="login-password" required>
+
+                <button type="submit">Giriş Yap</button>
+                <div id="login-error-message" class="login-error"></div>
+            </form>
+        </div>
+    </div>
+
+
+        <div id="content" style="display:none;">
             <div class="card pad" style="margin-bottom: 14px;">
         <div style="font-size:14px; color:var(--muted); font-weight:1000; letter-spacing:.2px; margin-bottom: 8px;">Aktif Etkinlik Seçimi</div>
         <select id="eventSelect" style="width:100%; padding:10px 14px; border-radius:12px; border:1px solid var(--stroke); font-weight:700; font-size:16px;">
@@ -174,19 +134,17 @@
       </div>
 
             <div class="grid" style="margin-bottom:14px;">
-                <div class="card pad kpi col-4">
+        <div class="card pad kpi col-4">
           <div class="label">Toplam Kayıt (Check-in)</div>
           <div class="value" id="kpiTotal">—</div>
           <div class="sub" id="kpiTotalSub">Seçilen etkinlik / Tüm zamanlar</div>
         </div>
-        
-                <div class="card pad kpi col-4">
+        <div class="card pad kpi col-4">
           <div class="label">Tekil Katılımcı (CRM)</div>
           <div class="value" id="kpiUnique">—</div>
           <div class="sub">participants tablosundaki benzersiz kişi sayısı</div>
         </div>
-
-                <div class="card pad kpi col-4">
+        <div class="card pad kpi col-4">
           <div class="label">Bugün Kayıt</div>
           <div class="value" id="kpiToday">—</div> 
           <div class="sub" id="kpiTodaySub">Son 24 saatlik dilim</div>
@@ -194,15 +152,11 @@
       </div>
 
             <div class="grid">
-                <div class="card col-6 full">
-          <div class="pad" style="border-bottom: 1px solid var(--stroke);">
-            <h2>Saatlik Kayıt Grafiği</h2>
-            <p style="font-size:14px; color:var(--muted); margin:0;">Son 24 saatteki katılım yoğunluğu.</p>
-          </div>
+        <div class="card col-6 full">
+          <div class="pad" style="border-bottom: 1px solid var(--stroke);"><h2>Saatlik Kayıt Grafiği</h2><p style="font-size:14px; color:var(--muted); margin:0;">Son 24 saatteki katılım yoğunluğu.</p></div>
           <div class="chartContainer"><canvas id="hourlyChart"></canvas></div>
         </div>
-
-                <div class="card col-6 full">
+        <div class="card col-6 full">
           <div class="pad" style="border-bottom: 1px solid var(--stroke); display: flex; justify-content: space-between; align-items: center;">
             <h2>Son Kayıtlar</h2>
             <button id="refreshBtn" class="btn" style="padding: 8px 12px; font-size: 12px;">Yenile</button>
@@ -210,13 +164,7 @@
           <div class="tableWrap">
             <table>
               <thead>
-                <tr>
-                  <th style="width:20px;">#</th>
-                  <th>Ad Soyad</th>
-                  <th>E-posta</th>
-                  <th>Telefon</th>
-                  <th>Saat</th>
-                </tr>
+                <tr><th>#</th><th>Ad Soyad</th><th>E-posta</th><th>Telefon</th><th>Saat</th></tr>
               </thead>
               <tbody id="recordsBody">
                 <tr><td colspan="5" style="text-align:center; color:var(--muted2); font-weight:700;">Veri yok.</td></tr>
@@ -225,31 +173,37 @@
           </div>
         </div>
       </div>
-
     </div>
   </main>
 
   <script>
-    // =========================
-    // 1) Supabase bilgilerini buraya gir
-    // Lütfen kendi URL ve ANON KEY değerlerinizle değiştirin!
-    // =========================
+    // =================================================================
+    // 2. SUPABASE YAPILANDIRMASI (Lütfen Kendi Değerlerinizle Değiştirin!)
+    // =================================================================
     const SUPABASE_URL = "https://iqrmitiszsyewgcsvuvs.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU1OTR9.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc";
     
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // =================================================================
+    // 3. DOM ELEMENTLERİ
+    // =================================================================
     const loading = document.getElementById("loading");
     const content = document.getElementById("content");
     const errorMsg = document.getElementById("errorMsg");
+    const loginSection = document.getElementById("loginSection");
+    const headerActions = document.getElementById("headerActions");
+    const loginForm = document.getElementById("login-form");
+    const loginEmailInput = document.getElementById("login-email");
+    const loginPasswordInput = document.getElementById("login-password");
+    const loginErrorMessage = document.getElementById("login-error-message");
+    
     const eventSelect = document.getElementById("eventSelect");
-    const recordsBody = document.getElementById("recordsBody");
     const logoutBtn = document.getElementById("logoutBtn");
     const refreshBtn = document.getElementById("refreshBtn");
+    const recordsBody = document.getElementById("recordsBody");
     
     let hourlyChart = null;
-
-    // KPI'lar
     const kpiTotal = document.getElementById("kpiTotal");
     const kpiUnique = document.getElementById("kpiUnique");
     const kpiToday = document.getElementById("kpiToday");
@@ -259,172 +213,158 @@
       console.error(msg);
       loading.style.display = "none";
       content.style.display = "none";
+      loginSection.style.display = "none";
       errorMsg.textContent = "Hata: " + (msg.message || msg);
       errorMsg.style.display = "block";
     }
 
-    // ==================================
-    // 2) YETKİLENDİRME KONTROLÜ
-    // ==================================
+    // =================================================================
+    // 4. YETKİLENDİRME VE GİRİŞ İŞLEMLERİ
+    // =================================================================
     async function checkAuth(){
+        loading.textContent = "Yetkilendirme Kontrol Ediliyor...";
+        loading.style.display = "block";
+        loginSection.style.display = "none";
+        content.style.display = "none";
+        headerActions.style.display = "none";
+
       try{
-        // Kullanıcı oturumunu kontrol et (authenticated rolü için)
         const { data: { user } } = await sb.auth.getUser();
 
         if(!user){
-          window.location.href = "login.html"; // Login sayfasına yönlendir
+          // Kullanıcı giriş yapmamışsa, login formunu göster
+            loading.style.display = "none";
+            loginSection.style.display = "block";
           return;
         }
-        
+        // Giriş başarılı, Dashboard'u yükle
+        loading.textContent = "Veriler yükleniyor...";
         await loadEvents();
         eventSelect.addEventListener("change", loadDashboardData);
         refreshBtn.addEventListener("click", loadDashboardData);
         logoutBtn.addEventListener("click", handleLogout);
+        headerActions.style.display = "flex";
         
         loadDashboardData(); 
 
       }catch(err){
-        handleError("Yetkilendirme hatası (RLS Kontrolü): " + err.message);
+        handleError(err);
       }
     }
 
+    // Giriş Formu Submit Olayı
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        loginErrorMessage.style.display = 'none';
+
+        const email = loginEmailInput.value;
+        const password = loginPasswordInput.value;
+
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+
+        if (error) {
+            loginErrorMessage.textContent = 'Giriş başarısız: E-posta veya şifre hatalı.';
+            loginErrorMessage.style.display = 'block';
+        } else {
+            // Giriş başarılı, Dashboard verilerini yükle
+            checkAuth(); 
+        }
+    });
+
+    // Çıkış Yapma İşlemi
     async function handleLogout(){
       const { error } = await sb.auth.signOut();
       if(error){
         alert("Çıkış yapılırken hata: " + error.message);
       } else {
-        window.location.href = "login.html"; 
+        checkAuth(); // Çıkış yaptıktan sonra login ekranını göster
       }
     }
 
-    // ==================================
-    // 3) ETKİNLİK LİSTESİNİ YÜKLEME
-    // ==================================
+    // =================================================================
+    // 5. VERİ ÇEKME FONKSİYONLARI
+    // =================================================================
     async function loadEvents(){
-      try{
-        const { data, error } = await sb
-          .from("events")
-          .select("id, title, is_active")
-          .order("created_at", { ascending: false });
+      // Etkinlikler sadece yönetici rolü (authenticated) ile çekilebilir.
+      const { data, error } = await sb
+        .from("events")
+        .select("id, title, is_active")
+        .order("created_at", { ascending: false });
 
-        if(error) throw error;
-
-        eventSelect.innerHTML = `<option value="">Tüm Aktif Etkinlikler</option>`;
-
-        data.forEach(e => {
-          const opt = document.createElement("option");
-          opt.value = e.id;
-          opt.textContent = e.title + (e.is_active ? " (Aktif)" : " (Pasif)");
-          eventSelect.appendChild(opt);
-        });
-      }catch(err){
-        handleError("Etkinlik listesi yüklenemedi. RLS kontrolü: " + err.message);
-      }
+      if(error) throw error;
+      eventSelect.innerHTML = `<option value="">Tüm Aktif Etkinlikler</option>`;
+      data.forEach(e => {
+        const opt = document.createElement("option");
+        opt.value = e.id;
+        opt.textContent = e.title + (e.is_active ? " (Aktif)" : " (Pasif)");
+        eventSelect.appendChild(opt);
+      });
     }
 
 
-    // ==================================
-    // 4) ANA VERİ ÇEKME FONKSİYONU
-    // ==================================
     async function loadDashboardData(){
       loading.style.display = "block";
-      errorMsg.style.display = "none";
       content.style.display = "none";
-
+      
       const selectedEventId = eventSelect.value || null;
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-      // -----------------
-      // A) TOPLAM KAYITLAR
-      // -----------------
+      // A) TOPLAM KAYITLAR (KPI)
       try{
         let query = sb.from("attendances").select("id", { count: "exact" });
         if(selectedEventId) query = query.eq("event_id", selectedEventId);
-
         const { count: totalCount, error: totalError } = await query;
         if(totalError) throw totalError;
-
         kpiTotal.textContent = totalCount.toLocaleString("tr-TR") || "0";
-      }catch(err){
-        handleError("Toplam kayıtlar çekilemedi: " + err.message);
-        return;
-      }
+      }catch(err){ handleError("Toplam kayıtlar çekilemedi: " + err.message); return; }
 
-      // -----------------
-      // B) TEKİL KATILIMCI (CRM - participants tablosundan veya distinct sayım)
-      // -----------------
+      // B) TEKİL KATILIMCI (CRM - KPI)
       try{
+        let uniqueCount;
         if (selectedEventId) {
           // Seçili etkinliğe katılan tekil participant_id'leri say
-          // Supabase'te doğrudan COUNT(DISTINCT) olmadığı için CSV metodu kullanılır:
           const { data: csvData, error: csvError } = await sb
-            .from("attendances")
-            .select("participant_id", { count: "exact" })
-            .eq("event_id", selectedEventId)
-            .not("participant_id", "is", null)
-            .csv();
+            .from("attendances").select("participant_id", { count: "exact" }).eq("event_id", selectedEventId)
+            .not("participant_id", "is", null).csv();
           
           if(csvError) throw csvError;
-
-          // CSV verisini parse et ve benzersiz ID'leri Set kullanarak say
           const ids = csvData.trim().split('\n').slice(1);
-          const distinctIds = new Set(ids.filter(id => id !== ''));
-          kpiUnique.textContent = distinctIds.size.toLocaleString("tr-TR") || "0";
-
+          uniqueCount = new Set(ids.filter(id => id !== '')).size;
         } else {
           // Etkinlik seçilmediyse, doğrudan participants tablosunu say
-          const { count: uniqueCount, error: uniqueError } = await sb
-            .from("participants")
-            .select("id", { count: "exact" });
-          
+          const { count: participantsCount, error: uniqueError } = await sb.from("participants").select("id", { count: "exact" });
           if(uniqueError) throw uniqueError;
-          kpiUnique.textContent = uniqueCount.toLocaleString("tr-TR") || "0";
+          uniqueCount = participantsCount;
         }
-      }catch(err){
-        handleError("Tekil katılımcı sayısı çekilemedi: " + err.message);
-        return;
-      }
+        kpiUnique.textContent = uniqueCount.toLocaleString("tr-TR") || "0";
+      }catch(err){ handleError("Tekil katılımcı sayısı çekilemedi: " + err.message); return; }
 
-      // -----------------
-      // C) BUGÜN KAYIT (Son 24 saat)
-      // -----------------
+      // C) BUGÜN KAYIT (Son 24 saat - KPI)
       try{
         let query = sb.from("attendances").select("id", { count: "exact" });
         if(selectedEventId) query = query.eq("event_id", selectedEventId);
-        
         query = query.gte("created_at", yesterday);
 
         const { count: todayCount, error: todayError } = await query;
         if(todayError) throw todayError;
-
         kpiToday.textContent = todayCount.toLocaleString("tr-TR") || "0";
-        
-      }catch(err){
-        handleError("Bugünkü kayıtlar çekilemedi: " + err.message);
-        return;
-      }
+      }catch(err){ handleError("Bugünkü kayıtlar çekilemedi: " + err.message); return; }
 
 
-      // -----------------
-      // D) SON KAYIT LİSTESİ
-      // -----------------
+      // D) SON KAYIT LİSTESİ (TABLO)
       try{
         let query = sb.from("attendances").select("full_name, email, phone, created_at");
         if(selectedEventId) query = query.eq("event_id", selectedEventId);
         
-        const { data: records, error: recordsError } = await query
-          .order("created_at", { ascending: false })
-          .limit(20);
+        const { data: records, error: recordsError } = await query.order("created_at", { ascending: false }).limit(20);
 
         if(recordsError) throw recordsError;
-
         recordsBody.innerHTML = ""; 
 
         if(records && records.length > 0){
           records.forEach((r, index) => {
             const date = new Date(r.created_at);
             const time = date.toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' });
-            
             const row = recordsBody.insertRow();
             row.insertCell().textContent = index + 1;
             row.insertCell().textContent = r.full_name;
@@ -435,42 +375,25 @@
         } else {
           recordsBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--muted2); font-weight:700;">Seçilen etkinlik için kayıt bulunamadı.</td></tr>`;
         }
-      }catch(err){
-        handleError("Son kayıtlar çekilemedi: " + err.message);
-        return;
-      }
+      }catch(err){ handleError("Son kayıtlar çekilemedi: " + err.message); return; }
 
-      // -----------------
-      // E) GRAFİK VERİSİ (get_hourly_attendance fonksiyonunu çağırır)
-      // -----------------
+      // E) GRAFİK VERİSİ (RPC Call)
       try {
-        const { data: chartData, error: chartError } = await sb.rpc('get_hourly_attendance', {
-          p_event_id: selectedEventId,
-          p_days: 1 
-        });
-
+        const { data: chartData, error: chartError } = await sb.rpc('get_hourly_attendance', { p_event_id: selectedEventId, p_days: 1 });
         if (chartError) throw chartError;
-
         updateChart(chartData || []);
-      } catch (err) {
-        updateChart([]); 
-        console.warn("Grafik verisi çekilemedi. RLS execute iznini kontrol edin.");
-      }
+      } catch (err) { updateChart([]); console.warn("Grafik verisi çekilemedi. get_hourly_attendance fonksiyonunu ve EXECUTE RLS iznini kontrol edin."); }
 
       // Başarılı yükleme
       loading.style.display = "none";
       content.style.display = "block";
     }
 
-    // ==================================
-    // 5) GRAFİK ÇİZİMİ (Chart.js)
-    // ==================================
+    // =================================================================
+    // 7. GRAFİK ÇİZİMİ (Chart.js)
+    // =================================================================
     function updateChart(data){
-      // (Grafik çizim mantığı aynı kalmıştır)
-
-      // ... (Grafik çizim kodu) ...
       
-      // Saatleri ve sayıları al
       const labels = data.map(d => {
         const h = d.hour_of_day;
         const displayHour = (h % 24).toString().padStart(2, '0');
@@ -496,21 +419,14 @@
           }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          },
-          plugins: {
-            legend: { display: false }
-          }
+          responsive: true, maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: false } }
         }
       });
     }
     
-    // Sayfa başlangıcı
+    // Sayfa Başlangıcı
     checkAuth();
   </script>
 </body>
