@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
   <style>
-    /* ... (CSS Kodları - Değişmedi) ... */
+    /* ... (CSS Kodları - Aynı kaldı) ... */
     :root{
       --bg:#f6fbff;
       --card: rgba(255,255,255,.86);
@@ -328,7 +328,7 @@
       </div>
       <div class="pinNote" id="pinNote"></div>
       <div class="muted" style="font-weight:900;font-size:12px;margin-top:10px;">
-        Not: Dashboard'a erişim sadece yetkili yö yöneticilere açıktır.
+        Not: Dashboard'a erişim sadece yetkili yöneticilere açıktır.
       </div>
     </div>
   </div>
@@ -373,32 +373,31 @@
         <button class="btn danger small" id="csvFilteredBtn" style="background:#b42318;">
             <span id="csvCount">—</span> Filtreli Kayıt İndir
         </button>
+        
         <div class="status" id="status">Hazır</div>
       </div>
     </div>
 
     <div class="grid">
-      <div class="card pad kpi col-3">
+      <div class="card pad kpi col-4">
         <div class="label">Toplam check-in</div>
         <div class="value" id="kpiTotal">—</div>
         <div class="sub" id="kpiTotalSub">Seçilen aralık</div>
       </div>
-      <div class="card pad kpi col-3">
-        <div class="label">Tekil Katılımcı (CRM)</div>
-        <div class="value" id="kpiUniq">—</div>
-        <div class="sub">profiles tablosundan</div>
+      
+      <div class="card pad kpi col-4">
+        <div class="label">Bugün check-in</div>
+        <div class="value" id="kpiToday">—</div>
+        <div class="sub">Bugüne özel</div>
       </div>
-      <div class="card pad kpi col-3">
+
+      <div class="card pad kpi col-4">
         <div class="label">Aktif etkinlik</div>
         <div class="value" id="kpiActive">—</div>
         <div class="sub">Şu an açık</div>
       </div>
-      <div class="card pad kpi col-3">
-        <div class="label">“Beklenen yoğunluk” (bugün)</div>
-        <div class="value" id="kpiForecast">—</div>
-        <div class="sub">Son 4 haftanın aynı günü ort.</div>
+      
       </div>
-    </div>
 
     <div class="grid">
       <div class="card pad col-8">
@@ -431,7 +430,7 @@
             <h2>Etkinlik bazlı katılım (Top 12)</h2>
             <p>Hangi etkinlik gerçekten çalışıyor?</p>
           </div>
-          </div>
+        </div>
         <canvas id="chartTopEvents" height="140"></canvas>
       </div>
 
@@ -504,6 +503,7 @@
 /* =========================
    0) CONFIG (KENDİ SUPABASE BİLGİLERİNİZİ GİRİN)
 ========================= */
+// Lütfen burayı kendi bilgilerinizle güncelleyin
 const SUPABASE_URL = "https://iqrmitiszsyewgcsvuvs.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc";
 
@@ -523,8 +523,7 @@ const state = {
   byProject: new Map(),
   charts: { daily:null, topEvents:null, newReturning:null },
   drawer: { event:null, rows:[] },
-  // YENİ EKLEME
-  uniqueParticipantsCount: 0, 
+  // CRM ÖZELLİKLERİ KALDIRILDI
   filteredAttendances: [], 
 };
 
@@ -654,7 +653,7 @@ function checkSessionAndInit() {
 checkSessionAndInit();
 
 /* =========================
-   4) DATA LOADING (TEKİL KİŞİ SAYISI ÇEKİMİ EKLENDİ)
+   4) DATA LOADING (CRM KALDIRILDI)
 ========================= */
 
 async function fetchAll(){
@@ -670,23 +669,18 @@ async function fetchAll(){
     const eRes = await sb.from("events").select("id, project_id, title, code, is_active, created_at").order("created_at",{ascending:false});
     if(eRes.error) throw eRes.error;
 
-    // attendances sorgusu (participant_id eklendi)
+    // attendances sorgusu (participant_id çekimi kaldırıldı)
     const aRes = await sb
       .from("attendances")
-      .select("id, event_id, full_name, phone, email, kvkk_consent, created_at, participant_id")
+      .select("id, event_id, full_name, phone, email, kvkk_consent, created_at")
       .gte("created_at", sinceISO)
       .order("created_at", { ascending: false })
       .limit(5000);
 
     if(aRes.error) throw aRes.error;
 
-    // YENİ EKLEME: Tekil katılımcı sayısını çekme
-    const uRes = await sb
-        .from("participants")
-        .select("id", { count: 'exact' }); 
-    if(uRes.error) throw uRes.error;
-    
-    state.uniqueParticipantsCount = uRes.count || 0;
+    // CRM verisi çekimi kaldırıldı.
+    // state.uniqueParticipantsCount = 0; 
 
 
     state.projects = pRes.data || [];
@@ -703,6 +697,9 @@ function buildAggregates(){
     const projectStats = new Map();
     const todayISO = toISOStartOfDay(new Date());
     let todayCount = 0;
+    
+    // Tekil kişi sayısını email/phone üzerinden hesaplama (CRM olmadan)
+    const allUniqueAttendees = new Set(); 
 
     for(const a of state.attendances){
         if(a.created_at >= todayISO) todayCount++;
@@ -736,9 +733,10 @@ function buildAggregates(){
         const digits = ph.replace(/[^\d]/g,"");
         if(digits.length < 10) s.badPhone++;
 
-        // Tekil kişi sayısını hesaplamak için: participant_id kullan
-        const fp = a.participant_id || em || ph || (a.full_name || "").trim().toLowerCase();
+        // Tekil kişi tespiti (CRM olmadığından, email/phone hash'i kullanıyoruz)
+        const fp = em || ph || (a.full_name || "").trim().toLowerCase();
         if(fp) s.people.add(fp);
+        if(fp) allUniqueAttendees.add(fp);
 
         const prId = e.project_id;
         if(!projectStats.has(prId)){
@@ -783,30 +781,15 @@ function buildAggregates(){
         };
     });
 
-    return { enrichedEvents, enrichedProjects, todayCount };
+    return { enrichedEvents, enrichedProjects, todayCount, allUniqueAttendeesCount: allUniqueAttendees.size };
 }
 
 /* =========================
    5) ANALYTICS
 ========================= */
 function computeForecastSameWeekday(){
-  const now = new Date();
-  const wd = now.getDay(); 
-  const start = new Date(); start.setDate(start.getDate() - 28);
-  start.setHours(0,0,0,0);
-
-  const buckets = [0,0,0,0]; 
-  for(const a of state.attendances){
-    const d = new Date(a.created_at);
-    if(d < start) continue;
-    if(d.getDay() !== wd) continue;
-
-    const diffDays = Math.floor((now - d) / (1000*60*60*24));
-    const w = Math.min(3, Math.floor(diffDays / 7));
-    buckets[w] += 1;
-  }
-  const avg = buckets.reduce((x,y)=>x+y,0) / 4;
-  return Math.round(avg);
+  // Forecast KPI'ı şimdilik kaldırıldığı için basitleştirildi
+  return 0; 
 }
 
 function dailySeries(){
@@ -856,19 +839,20 @@ function topEventsSeries(enrichedEvents){
 }
 
 function newReturningSeries(){
-  // participant_id kullanılarak doğru retention hesaplanır
-  const seen = new Set();
+  // CRM olmadığı için, basit ve yaklaşık bir tekil/tekrar tespiti yapıyoruz (email/phone bazında)
+  const seen = new Map();
   let newCount = 0;
   let returningCount = 0;
 
   const rows = [...state.attendances].sort((a,b)=>a.created_at.localeCompare(b.created_at));
 
   for(const a of rows){
-    const fp = a.participant_id;
-    if(!fp) continue; // participant_id yoksa atla
+    const fp = normEmail(a.email) || normPhone(a.phone); // Tekil tanımlayıcı
+
+    if(!fp) continue; // Geçersiz kayıtları atla
     
     if(seen.has(fp)) returningCount++;
-    else { seen.add(fp); newCount++; }
+    else { seen.set(fp, true); newCount++; }
   }
 
   return { newCount, returningCount };
@@ -877,13 +861,13 @@ function newReturningSeries(){
 function crossParticipationTopProjects(enrichedEvents, enrichedProjects){
   const top = [...enrichedProjects].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0)).slice(0,6);
 
-  // participant_id kullanılarak tekillik sağlanır
+  // Email/Phone hash'i üzerinden tekillik sağlanır
   const projPeople = new Map(top.map(p=>[p.id, new Set()]));
   for(const a of state.attendances){
     const ev = state.byEvent.get(a.event_id);
     if(!ev) continue;
     if(!projPeople.has(ev.project_id)) continue;
-    const fp = a.participant_id;
+    const fp = normEmail(a.email) || normPhone(a.phone);
     if(fp) projPeople.get(ev.project_id).add(fp);
   }
 
@@ -914,20 +898,21 @@ function performanceTag(event){
 }
 
 /* =========================
-   6) RENDER (TEKİL KİŞİ KPI'I VE CSV BUTONU EKLENDİ)
+   6) RENDER (TEMİZLENMİŞ KPI'LAR VE RENDER LOGİĞİ)
 ========================= */
 function renderKPIs({enrichedEvents, enrichedProjects, todayCount}){
   const total = state.attendances.length;
   $("kpiTotal").textContent = fmtTR(total);
   $("kpiToday").textContent = fmtTR(todayCount);
-  // YENİ KPI: Tekil Kişi Sayısı
-  $("kpiUniq").textContent = fmtTR(state.uniqueParticipantsCount);
+  // KPI TEKİL KİŞİ SAYISI KALDIRILDI
+  // $("kpiUniq").textContent = fmtTR(state.uniqueParticipantsCount);
 
   const activeEvents = enrichedEvents.filter(e=>e.is_active===true).length;
   $("kpiActive").textContent = fmtTR(activeEvents);
 
-  const fc = computeForecastSameWeekday();
-  $("kpiForecast").textContent = fmtTR(fc);
+  // FORECAST KPI'I KALDIRILDI
+  // const fc = computeForecastSameWeekday();
+  // $("kpiForecast").textContent = fmtTR(fc);
 
   const s = dailySeries().values;
   const last7 = s.slice(-7).reduce((a,b)=>a+b,0);
@@ -937,8 +922,8 @@ function renderKPIs({enrichedEvents, enrichedProjects, todayCount}){
   if(last7 < prev7 * 0.85) tag = "Düşüşte";
   $("trendTag").textContent = `Trend: ${tag}`;
   
-  // CSV butonundaki kayıt sayısını güncelle
-  $("csvCount").textContent = `${fmtTR(state.filteredAttendances.length)} Kayıt`;
+  // CSV butonundaki kayıt sayacını güncelle
+  $("csvCount").textContent = `${fmtTR(state.filteredAttendances.length)}`;
 }
 
 function renderDailyChart(){
@@ -1023,6 +1008,7 @@ function renderTopEventsChart(enrichedEvents){
 
 function renderNewReturningChart(){
   const {newCount, returningCount} = newReturningSeries();
+  // Hesaplama artık sadece email/phone hash'ine dayalı
   $("retentionTag").textContent = `Geri gelen oranı: ${newCount+returningCount ? Math.round(100*returningCount/(newCount+returningCount)) : 0}%`;
 
   const ctx = $("chartNewReturning").getContext("2d");
@@ -1040,6 +1026,7 @@ function renderNewReturningChart(){
 
 function renderQC(enrichedEvents){
   let kvkkNo = 0, badEmail = 0, badPhone = 0;
+  // Tekrarlılık CRM'siz hesaplanıyor
   const possibleDup = new Map(); 
 
   for(const a of state.attendances){
@@ -1051,8 +1038,8 @@ function renderQC(enrichedEvents){
     const digits = ph.replace(/[^\d]/g,"");
     if(digits.length < 10) badPhone++;
 
-    // participant_id kullanılarak mükerrerlik daha doğru kontrol edilir
-    const fp = a.participant_id; 
+    // Tekrarlılık tespiti (email/phone hash'i üzerinden)
+    const fp = em || ph;
     if(fp){
       possibleDup.set(fp, (possibleDup.get(fp)||0)+1);
     }
@@ -1177,7 +1164,7 @@ function renderActiveOps(enrichedEvents){
   });
 }
 
-// FİLTRELENMİŞ KAYITLARI BURADA TUTUYORUZ VE CSV BUTONUNU GÜNCELLİYORUZ
+// Filtreleme (CRM'siz)
 function filterAndRenderProjectsHierarchy(enrichedEvents, enrichedProjects){
   const q = (state.search||"").trim().toLowerCase();
   const onlyActive = state.onlyActive;
@@ -1218,11 +1205,10 @@ function filterAndRenderProjectsHierarchy(enrichedEvents, enrichedProjects){
   for(const p of projOrder){
     const evs = byP.get(p.id) || [];
     
-    // Proje bazlı arama yapılıyorsa ve proje adı eşleşiyorsa göster
     const projectFilterMatch = (p.project_name||"").toLowerCase().includes(q);
 
     if(q && !projectFilterMatch && evs.length === 0) continue; 
-    if(!q && evs.length === 0) continue; // Filtre yoksa ve etkinlik yoksa gösterme
+    if(!q && evs.length === 0) continue; 
 
     shownProjects++;
     shownEvents += evs.length;
@@ -1283,7 +1269,7 @@ function filterAndRenderProjectsHierarchy(enrichedEvents, enrichedProjects){
 
   $("projects").innerHTML = html || `<div class="empty">Bu filtrelerle gösterilecek proje/etkinlik yok.</div>`;
   $("shownTag").textContent = `${fmtTR(shownProjects)} proje / ${fmtTR(shownEvents)} etkinlik`;
-  $("csvCount").textContent = `${fmtTR(state.filteredAttendances.length)}`; // CSV sayacını güncelle
+  $("csvCount").textContent = `${fmtTR(state.filteredAttendances.length)}`; 
   
   $("projects").querySelectorAll("[data-open]").forEach(btn=>{
     btn.addEventListener("click", ()=> openDrawer(btn.getAttribute("data-open"), 'event'));
@@ -1292,7 +1278,7 @@ function filterAndRenderProjectsHierarchy(enrichedEvents, enrichedProjects){
 
 
 /* =========================
-   7) DRAWER (EVENT & PARTICIPANT DETAYLARI)
+   7) DRAWER (ETKİNLİK DETAYLARI)
 ========================= */
 
 function showDrawer(show){
@@ -1302,7 +1288,7 @@ function showDrawer(show){
   } else {
     drawerMask.classList.remove("show");
     drawerMask.setAttribute("aria-hidden","true");
-    drawerContent.innerHTML = ''; // İçeriği temizle
+    drawerContent.innerHTML = ''; 
   }
 }
 
@@ -1310,140 +1296,17 @@ drawerMask.addEventListener("click", (e)=>{
   if(e.target === drawerMask || e.target.id === "closeDrawerBtn") showDrawer(false);
 });
 
+// Katılımcı Profili (CRM) Fonksiyonları KALDIRILDI
 
-// YENİ FONKSİYON: Katılımcı Profili Verisini Çekme
-async function fetchParticipantProfile(participantId) {
-    if (!participantId) return null;
-    
-    // 1. Participant profilini çek
-    const pRes = await sb
-        .from("participants")
-        .select("*")
-        .eq("id", participantId)
-        .single();
-    if(pRes.error) throw pRes.error;
-
-    const profile = pRes.data;
-
-    // 2. Bu katılımcının katıldığı tüm attendances kayıtlarını çek
-    const aRes = await sb
-        .from("attendances")
-        .select(`
-            created_at,
-            events ( title, code )
-        `)
-        .eq("participant_id", participantId)
-        .order("created_at", { ascending: false });
-
-    if(aRes.error) throw aRes.error;
-
-    return { profile, history: aRes.data };
-}
-
-// YENİ FONKSİYON: Katılımcı Profil Çekmecesini Açma
-async function openParticipantDrawer(participantId) {
-    if (!participantId) return;
-
-    drawerContent.innerHTML = `<div class="drawerHeader"><div class="title"><h2>Profil Yükleniyor...</h2></div></div><div class="drawerBody"><div class="skeleton" style="height:200px"></div></div>`;
-    showDrawer(true);
-
-    try {
-        const { profile, history } = await fetchParticipantProfile(participantId);
-        
-        // Katılım Geçmişi Tablosu
-        let historyHtml = `
-            <table class="table">
-                <thead><tr><th>Etkinlik Adı</th><th>Kod</th><th>Tarih</th></tr></thead>
-                <tbody>
-        `;
-        
-        if (history && history.length > 0) {
-            for (const item of history) {
-                historyHtml += `
-                    <tr>
-                        <td>${escapeHtml(item.events.title || '—')}</td>
-                        <td>${escapeHtml(item.events.code || '—')}</td>
-                        <td>${new Date(item.created_at).toLocaleString('tr-TR')}</td>
-                    </tr>
-                `;
-            }
-        } else {
-             historyHtml += `<tr><td colspan="3" class="muted">Kayıtlı geçmiş etkinlik yok.</td></tr>`;
-        }
-        historyHtml += `</tbody></table>`;
-        
-        // Ana Profil Yapısı
-        drawerContent.innerHTML = `
-            <div class="drawerHeader">
-                <div style="min-width:0;">
-                    <div style="font-weight:1000;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                        ${escapeHtml(profile.full_name || 'Katılımcı Profili')}
-                    </div>
-                    <div class="muted" style="font-weight:900;font-size:12px;margin-top:4px;">
-                        CRM ID: ${participantId}
-                    </div>
-                    <div class="row" style="margin-top:8px;">
-                        <span class="pill">${fmtTR(profile.total_events)} Toplam Katılım</span>
-                        <span class="pill gray">Son: ${new Date(profile.last_checkin_at).toLocaleDateString('tr-TR')}</span>
-                    </div>
-                </div>
-                <button class="btn small danger" id="closeDrawerBtn">Kapat</button>
-            </div>
-            <div class="drawerBody">
-                <div class="grid" style="margin-bottom:14px;">
-                    <div class="card pad col-6">
-                        <div class="label">İletişim</div>
-                        <div style="font-weight:1000;">Email: ${escapeHtml(profile.email || '—')}</div>
-                        <div style="font-weight:1000;">Telefon: ${escapeHtml(profile.phone || '—')}</div>
-                    </div>
-                     <div class="card pad col-6">
-                        <div class="label">Tarih Bilgisi</div>
-                        <div style="font-weight:1000;">İlk Check-in: ${new Date(profile.first_checkin_at).toLocaleDateString('tr-TR')}</div>
-                        <div style="font-weight:1000;">Oluşturuldu: ${new Date(profile.created_at).toLocaleDateString('tr-TR')}</div>
-                    </div>
-                </div>
-                
-                <div class="sectionTitle">
-                    <h2>Katılım Geçmişi</h2>
-                    <p>Bu kişinin katıldığı tüm etkinlikler</p>
-                </div>
-                ${historyHtml}
-            </div>
-        `;
-        
-        // Yeni kapatma butonunu bağla
-        $("closeDrawerBtn").addEventListener("click", ()=> showDrawer(false));
-
-
-    } catch (err) {
-        console.error("Katılımcı Profili Yükleme Hatası:", err);
-        drawerContent.innerHTML = `
-            <div class="drawerHeader">
-                <div class="title"><h2>Hata</h2></div>
-                <button class="btn small danger" id="closeDrawerBtn">Kapat</button>
-            </div>
-            <div class="drawerBody"><p>Profil verisi yüklenirken bir hata oluştu. RLS ve Trigger ayarlarınızı kontrol edin.</p></div>
-        `;
-        $("closeDrawerBtn").addEventListener("click", ()=> showDrawer(false));
-    }
-}
-
-
-// openDrawer fonksiyonunu modüler hale getir (Etkinlik Detay)
+// openDrawer fonksiyonu sadece Event Detay açacak
 async function openDrawer(id, type) {
-    if (type === 'participant') {
-        openParticipantDrawer(id);
-        return;
-    }
-    
-    // EVENT DETAY (ESKİ LOGİK)
+    if (type !== 'event') return; // Sadece etkinlik detayını aç
+
     const ev = state.byEvent.get(id);
     if(!ev){
         setStatus("Etkinlik bulunamadı");
         return;
     }
-    
-    // ... yükleme ekranı ve veri çekme mantığı ...
     
     // --- EVENT HEADER RENDER ---
     const headerHtml = `
@@ -1473,7 +1336,7 @@ async function openDrawer(id, type) {
             <table class="table" id="drawerTable">
                 <thead>
                     <tr>
-                        <th style="width:26%">Ad Soyad (Tıkla: CRM)</th>
+                        <th style="width:26%">Ad Soyad</th>
                         <th style="width:22%">Mail</th>
                         <th style="width:18%">Telefon</th>
                         <th style="width:12%">KVKK</th>
@@ -1482,9 +1345,6 @@ async function openDrawer(id, type) {
                 </thead>
                 <tbody id="drawerTbody"></tbody>
             </table>
-            <div class="muted" style="font-weight:900;font-size:12px;margin-top:10px;">
-                Not: Ad/Soyad'a tıklayarak katılımcı geçmişini görebilirsiniz.
-            </div>
         </div>
     `;
     drawerContent.innerHTML = headerHtml;
@@ -1494,13 +1354,12 @@ async function openDrawer(id, type) {
     const sinceISO = toISOStartDaysAgo(state.days);
     const res = await sb
         .from("attendances")
-        .select("id, event_id, full_name, phone, email, kvkk_consent, created_at, participant_id") // participant_id eklendi
+        .select("id, event_id, full_name, phone, email, kvkk_consent, created_at")
         .eq("event_id", id)
         .gte("created_at", sinceISO)
         .order("created_at", { ascending: false })
         .limit(2000);
 
-    // ... (Hata kontrolü) ...
     if(res.error){
         $("drawerStatus").textContent = "Hata: Veri okunamadı. RLS kontrol et.";
         $("drawerTbody").innerHTML = "";
@@ -1540,10 +1399,8 @@ function renderDrawerTable(){
   const tr = (r)=>{
     const kv = r.kvkk_consent ? `<span class="pill good">Evet</span>` : `<span class="pill bad">Hayır</span>`; 
     
-    // YENİ EKLEME: İsmi tıklanabilir yapıyoruz (CRM)
-    const nameCell = r.participant_id 
-        ? `<a href="#" onclick="event.preventDefault(); openParticipantDrawer('${r.participant_id}')">${escapeHtml(r.full_name||"")}</a>` 
-        : escapeHtml(r.full_name||"");
+    // CRM linki KALDIRILDI
+    const nameCell = escapeHtml(r.full_name||"");
 
     return `
       <tr>
@@ -1565,14 +1422,15 @@ function renderDrawerTable(){
    8) CSV (DİNAMİK FİLTERLİ İNDİRME)
 ========================= */
 
-// Yeni: Filtrelenmiş kayıtları indiren buton
+// Filtrelenmiş kayıtları indiren buton
 $("csvFilteredBtn").addEventListener("click", ()=>{
   downloadCSV(state.filteredAttendances, `bbo_filtered_attendances_${state.days}gun.csv`);
 });
 
 
 function downloadCSV(rows, filename){
-  const headers = ["event_id","full_name","email","phone","kvkk_consent","created_at", "participant_id"]; 
+  // CSV header'dan 'participant_id' kaldırıldı
+  const headers = ["event_id","full_name","email","phone","kvkk_consent","created_at"]; 
   const esc = (v)=>{
     const s = (v===null || v===undefined) ? "" : String(v);
     const safe = s.replaceAll('"','""');
@@ -1588,8 +1446,7 @@ function downloadCSV(rows, filename){
       r.email,
       r.phone,
       r.kvkk_consent, 
-      r.created_at,
-      r.participant_id
+      r.created_at
     ].map(esc).join(","));
   }
 
@@ -1608,7 +1465,7 @@ async function downloadCSVForEvent(eventId){
   const sinceISO = toISOStartDaysAgo(state.days);
   const res = await sb
     .from("attendances")
-    .select("event_id, full_name, email, phone, kvkk_consent, created_at, participant_id") 
+    .select("event_id, full_name, email, phone, kvkk_consent, created_at") // participant_id kaldırıldı
     .eq("event_id", eventId)
     .gte("created_at", sinceISO)
     .order("created_at", { ascending: false })
@@ -1630,12 +1487,12 @@ if($("range")) $("range").addEventListener("change", loadAll);
 if($("search")) $("search").addEventListener("input", ()=>{
   state.search = $("search").value;
   filterAndRenderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
-  renderKPIs(state._aggregates); // CSV sayacını güncellemek için
+  renderKPIs(state._aggregates); 
 });
 if($("onlyActive")) $("onlyActive").addEventListener("change", ()=>{
   state.onlyActive = $("onlyActive").checked;
   filterAndRenderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
-  renderKPIs(state._aggregates); // CSV sayacını güncellemek için
+  renderKPIs(state._aggregates); 
 });
 
 async function loadAll(){
@@ -1649,7 +1506,7 @@ async function loadAll(){
     await fetchAll();
 
     const aggregates = buildAggregates();
-    state._aggregates = aggregates; // Tekrar kullanım için sakla
+    state._aggregates = aggregates; 
     
     state._enrichedEvents = aggregates.enrichedEvents;
     state._enrichedProjects = aggregates.enrichedProjects;
@@ -1663,15 +1520,19 @@ async function loadAll(){
     renderCross(aggregates.enrichedEvents, aggregates.enrichedProjects);
 
     renderActiveOps(aggregates.enrichedEvents);
-    // YENİ FİLTERLI RENDER KULLANILDI
     filterAndRenderProjectsHierarchy(aggregates.enrichedEvents, aggregates.enrichedProjects); 
 
     setStatus(`Yüklendi · ${fmtTR(state.attendances.length)} check-in (son ${state.days} gün)`);
 
   } catch(err){
     console.error(err);
-    setStatus("Hata: Veri yüklenemedi. RLS, Auth veya Profil ayarlarınızı kontrol edin.");
-    // Hata durumunda boş DOM yapısı
+    setStatus("Hata: Veri yüklenemedi. RLS, Auth veya Supabase bağlantınızı kontrol edin.");
+    
+    // Hata durumunda DOM temizliği
+    $("kpiTotal").textContent = "Hata";
+    $("kpiToday").textContent = "Hata";
+    $("kpiActive").textContent = "Hata";
+    
     $("projects").innerHTML = `<div class="empty">Veri yüklenemedi. Konsoldaki hata mesajını kontrol edin.</div>`;
     $("activeEvents").innerHTML = `<div class="empty">Veri yok.</div>`;
     $("qcList").innerHTML = `<div class="empty">Veri yok.</div>`;
