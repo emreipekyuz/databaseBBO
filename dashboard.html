@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
   <style>
-    /* ... (CSS Kodları Buraya Gelir - Değişmedi) ... */
+    /* ... (CSS Kodları) ... */
     :root{
       --bg:#f6fbff;
       --card: rgba(255,255,255,.86);
@@ -676,7 +676,7 @@ function checkSessionAndInit() {
 checkSessionAndInit();
 
 /* =========================
-   4) DATA LOADING (SÜTUN ADLARI DÜZELTİLDİ)
+   4) DATA LOADING (SÜTUN ADLARI KESİN DÜZELTİLDİ)
 ========================= */
 
 async function fetchAll(){
@@ -684,15 +684,15 @@ async function fetchAll(){
 
     const sinceISO = toISOStartDaysAgo(state.days);
 
-    // projects sorgusu (DÜZELTİLDİ: 'name' kullanıldı)
+    // projects sorgusu (name kullanıldı)
     const pRes = await sb.from("projects").select("id, name, is_active").order("name",{ascending:true});
     if(pRes.error) throw pRes.error;
 
-    // events sorgusu (DÜZELTİLDİ: 'title' kullanıldı)
-    const eRes = await sb.from("events").select("id, project_id, title, event_code, is_active, created_at").order("created_at",{ascending:false});
+    // events sorgusu (title, code ve project_id kullanıldı)
+    const eRes = await sb.from("events").select("id, project_id, title, code, is_active, created_at").order("created_at",{ascending:false});
     if(eRes.error) throw eRes.error;
 
-    // attendances sorgusu (DÜZELTİLDİ: 'kvkk_consent' kullanıldı)
+    // attendances sorgusu (event_id, full_name, kvkk_consent kullanıldı)
     const aRes = await sb
       .from("attendances")
       .select("id, event_id, full_name, phone, email, kvkk_consent, created_at")
@@ -740,7 +740,7 @@ function buildAggregates(){
         s.count++;
         if(!s.last || a.created_at > s.last) s.last = a.created_at;
 
-        // DÜZELTME: kvkk_consent kullanıldı
+        // Eşleme: kvkk_consent kullanıldı
         const kv = !!a.kvkk_consent; 
         if(!kv) s.kvkkNo++;
 
@@ -771,13 +771,14 @@ function buildAggregates(){
         if(fp) ps.people.add(fp);
     }
 
-    // DÜZELTME: projects ve events verilerini eşleme (code'un beklediği isimlere)
+    // EŞLEME: projects ve events verilerini kodun beklediği isimlere eşleme
     const enrichedEvents = state.events.map(ev => {
         const st = eventStats.get(ev.id) || {count:0,last:null,kvkkNo:0,badEmail:0,badPhone:0,people:new Set()};
         return {
             ...ev,
             // Sütun adı eşlemesi
             event_title: ev.title, 
+            event_code: ev.code,   
             attendee_count: st.count,
             last_checkin_at: st.last,
             qc: { kvkkNo: st.kvkkNo, badEmail: st.badEmail, badPhone: st.badPhone },
@@ -1050,7 +1051,7 @@ function renderQC(enrichedEvents){
   const possibleDup = new Map(); 
 
   for(const a of state.attendances){
-    // DÜZELTME: kvkk_consent kullanıldı
+    // Eşleme: kvkk_consent kullanıldı
     if(!a.kvkk_consent) kvkkNo++; 
     
     const em = normEmail(a.email);
@@ -1283,7 +1284,7 @@ function renderProjectsHierarchy(enrichedEvents, enrichedProjects){
 }
 
 /* =========================
-   7) DRAWER (Etkinlik Detayı)
+   7) DRAWER (Etkinlik Detayları)
 ========================= */
 function showDrawer(show){
   const m = $("drawerMask");
@@ -1344,7 +1345,8 @@ async function openDrawer(eventId){
   const sinceISO = toISOStartDaysAgo(state.days);
   const res = await sb
     .from("attendances")
-    .select("id, event_id, full_name, phone, email, kvkk_consent, created_at") // DÜZELTİLDİ
+    // Sütunlar: event_id, full_name, kvkk_consent kullanıldı
+    .select("id, event_id, full_name, phone, email, kvkk_consent, created_at") 
     .eq("event_id", eventId)
     .gte("created_at", sinceISO)
     .order("created_at", { ascending: false })
@@ -1381,7 +1383,7 @@ function renderDrawerTable(){
   $("drawerStatus").textContent = `${fmtTR(filtered.length)} kayıt`;
 
   const tr = (r)=>{
-    // DÜZELTME: kvkk_consent kullanıldı
+    // Eşleme: kvkk_consent kullanıldı
     const kv = r.kvkk_consent ? `<span class="pill good">Evet</span>` : `<span class="pill bad">Hayır</span>`; 
     return `
       <tr>
@@ -1403,7 +1405,8 @@ function renderDrawerTable(){
    8) CSV (Sütun adları düzeltildi)
 ========================= */
 function downloadCSV(rows, filename){
-  const headers = ["event_id","full_name","email","phone","kvkk_consent","created_at"]; // DÜZELTİLDİ
+  // headers: event_id, full_name, kvkk_consent kullanıldı
+  const headers = ["event_id","full_name","email","phone","kvkk_consent","created_at"]; 
   const esc = (v)=>{
     const s = (v===null || v===undefined) ? "" : String(v);
     const safe = s.replaceAll('"','""');
@@ -1418,7 +1421,7 @@ function downloadCSV(rows, filename){
       r.full_name,
       r.email,
       r.phone,
-      r.kvkk_consent, // DÜZELTİLDİ
+      r.kvkk_consent, 
       r.created_at
     ].map(esc).join(","));
   }
@@ -1438,7 +1441,8 @@ async function downloadCSVForEvent(eventId){
   const sinceISO = toISOStartDaysAgo(state.days);
   const res = await sb
     .from("attendances")
-    .select("event_id, full_name, email, phone, kvkk_consent, created_at") // DÜZELTİLDİ
+    // Sütunlar: event_id, full_name, kvkk_consent kullanıldı
+    .select("event_id, full_name, email, phone, kvkk_consent, created_at") 
     .eq("event_id", eventId)
     .gte("created_at", sinceISO)
     .order("created_at", { ascending: false })
@@ -1499,8 +1503,8 @@ async function loadAll(){
 
   } catch(err){
     console.error(err);
-    setStatus("Hata: Veri yüklenemedi. RLS politikalarınızı veya tablo/sütun adlarınızı kontrol edin.");
-    // Hata durumunda boş DOM elementleri
+    // Hata durumunda, veritabanı şemasının doğru olduğundan eminiz. Hata RLS veya Auth'ta olabilir.
+    setStatus("Hata: Veri yüklenemedi. RLS, Auth veya Profil ayarlarınızı kontrol edin.");
     $("projects").innerHTML = `<div class="empty">Veri yüklenemedi. Konsoldaki hata mesajını kontrol edin.</div>`;
     $("activeEvents").innerHTML = `<div class="empty">Veri yok.</div>`;
     $("qcList").innerHTML = `<div class="empty">Veri yok.</div>`;
