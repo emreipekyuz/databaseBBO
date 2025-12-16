@@ -264,7 +264,7 @@
     }
     .table tr:last-child td{border-bottom:none;}
 
-    /* PIN gate */
+    /* Auth gate */
     .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;}
     .pinCard{max-width:400px;width:100%;padding:18px;}
     .pinCard h3{margin:0 0 10px;font-size:18px}
@@ -300,30 +300,30 @@
 </head>
 
 <body>
-  <!-- PIN -->
   <div id="pinScreen" class="center">
     <div class="card pinCard">
       <div class="brand" style="margin-bottom:10px;">
         <div class="logo"></div>
         <div class="title">
-          <h1>Dashboard</h1>
-          <p>PIN ile açılır (hızlı kullanım)</p>
+          <h1>Yönetici Girişi</h1>
+          <p>Dashboard'a erişim için Supabase Auth kullanın</p>
         </div>
       </div>
-      <input id="pinInput" class="pinInput" type="password" inputmode="numeric" placeholder="PIN (4-8 haneli)" />
+      
+      <input id="emailInput" class="pinInput" type="email" placeholder="E-posta" style="margin-bottom:10px;" />
+      <input id="passwordInput" class="pinInput" type="password" placeholder="Şifre" />
+
       <div class="row" style="margin-top:10px;">
-        <button class="btn" id="pinBtn" style="flex:1;">Aç</button>
-        <button class="btn ghost" id="pinClear">Temizle</button>
+        <button class="btn" id="loginBtn" style="flex:1;">Giriş Yap</button>
       </div>
       <div class="pinNote" id="pinNote"></div>
       <div class="muted" style="font-weight:900;font-size:12px;margin-top:10px;">
-        Not: Bu sayfa veri çekemiyorsa Supabase URL/KEY veya RLS/View sorunludur.
+        Not: Dashboard'a erişim sadece yetkili yöneticilere açıktır.
       </div>
     </div>
   </div>
 
-  <!-- APP -->
-  <div id="app" class="wrap hidden">
+  <div id="dashboardContent" class="wrap hidden">
     <div class="topbar">
       <div class="brand">
         <div class="logo"></div>
@@ -334,11 +334,10 @@
       </div>
       <div class="row">
         <button class="btn ghost" id="reloadBtn">Yenile</button>
-        <button class="btn secondary" id="lockBtn">Kilitle</button>
+        <button class="btn secondary" id="logoutBtn">Çıkış Yap</button>
       </div>
     </div>
 
-    <!-- Controls -->
     <div class="card pad" style="margin-bottom:12px;">
       <div class="chipRow">
         <div class="chip grow">
@@ -365,7 +364,6 @@
       </div>
     </div>
 
-    <!-- KPI -->
     <div class="grid">
       <div class="card pad kpi col-3">
         <div class="label">Toplam check-in</div>
@@ -389,7 +387,6 @@
       </div>
     </div>
 
-    <!-- Charts + Heatmap -->
     <div class="grid">
       <div class="card pad col-8">
         <div class="sectionTitle">
@@ -438,7 +435,6 @@
       </div>
     </div>
 
-    <!-- Ops mode -->
     <div class="grid">
       <div class="card pad col-7">
         <div class="sectionTitle">
@@ -473,7 +469,6 @@
       </div>
     </div>
 
-    <!-- Projects hierarchy -->
     <div class="card pad">
       <div class="sectionTitle">
         <div>
@@ -486,7 +481,6 @@
     </div>
   </div>
 
-  <!-- Drawer -->
   <div id="drawerMask" class="drawerMask" aria-hidden="true">
     <div class="card drawer" role="dialog" aria-modal="true">
       <div class="drawerHeader">
@@ -535,16 +529,16 @@
 
 <script>
 /* =========================
-   0) CONFIG (sen dolduracaksın)
+   0) CONFIG (SEN DOLDURACAKSIN)
 ========================= */
-const DASHBOARD_PIN = "123456"; // değiştir
-const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co";
+// KENDİ SUPABASE BİLGİLERİNİZİ GİRİN:
+const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXpjbGFyamZud3FuamV4Z3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODk4MTksImV4cCI6MjA4MTM2NTgxOX0.r5RpP-r0P8fbnRP3rt_Bwn12CmMESbXSn86kg4FWzfM";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =========================
-   1) STATE
+   1) STATE & DOM
 ========================= */
 const state = {
   days: 30,
@@ -560,8 +554,26 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
+const loginBtn = $("loginBtn");
+const emailInput = $("emailInput");
+const passwordInput = $("passwordInput");
+const pinNote = $("pinNote");
+const pinScreen = $("pinScreen");
+const dashboardContent = $("dashboardContent");
+const logoutBtn = $("logoutBtn");
 
 function setStatus(t){ $("status").textContent = t; }
+function setNote(t){ pinNote.textContent = t; }
+
+function toggleViews(showDash) {
+    if (showDash) {
+        pinScreen.classList.add("hidden");
+        dashboardContent.classList.remove("hidden");
+    } else {
+        pinScreen.classList.remove("hidden");
+        dashboardContent.classList.add("hidden");
+    }
+}
 
 function escapeHtml(str){
   return (str ?? "").toString().replace(/[&<>"']/g, (m) => ({
@@ -595,46 +607,83 @@ function normEmail(e){
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 /* =========================
-   2) PIN Gate
+   2) SUPABASE AUTH GATE
 ========================= */
+
 function lock(){
-  sessionStorage.removeItem("bbo_dash_ok");
-  location.reload();
+    sb.auth.signOut().then(() => {
+        sessionStorage.removeItem("bbo_dash_ok");
+        location.reload();
+    }).catch(err => {
+        console.error("Çıkış hatası:", err);
+        setStatus("Hata: Çıkış yapılamadı");
+    });
 }
+
 function unlock(){
-  sessionStorage.setItem("bbo_dash_ok","1");
-  $("pinScreen").classList.add("hidden");
-  $("app").classList.remove("hidden");
+    toggleViews(true);
+    sessionStorage.setItem("bbo_dash_ok", "true");
+    loadAll(); // Tüm veriyi yükle
 }
 
-$("pinBtn").addEventListener("click", async () => {
-  const v = ($("pinInput").value || "").trim();
-  if(v !== DASHBOARD_PIN){
-    $("pinNote").textContent = "PIN yanlış.";
-    return;
-  }
-  $("pinNote").textContent = "";
-  unlock();
-  await loadAll();
-});
+async function handleLogin(e) {
+    e.preventDefault();
 
-$("pinClear").addEventListener("click", ()=>{
-  $("pinInput").value = "";
-  $("pinNote").textContent = "";
-});
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-$("lockBtn").addEventListener("click", lock);
-$("reloadBtn").addEventListener("click", loadAll);
+    if (!email || !password) {
+        setNote("E-posta ve şifre zorunludur.");
+        return;
+    }
 
-if(sessionStorage.getItem("bbo_dash_ok")==="1"){
-  unlock();
-  // hemen yükle
-  loadAll();
+    setNote("Giriş yapılıyor...");
+    loginBtn.disabled = true;
+
+    // Supabase Auth ile giriş denemesi
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        console.error(error.message);
+        setNote("Giriş Başarısız: E-posta veya şifre hatalı.");
+        loginBtn.disabled = false;
+        return;
+    }
+
+    // Başarılı girişten sonra
+    setNote("Giriş Başarılı.");
+    unlock();
 }
+
+// Olay Dinleyicileri
+if(loginBtn) loginBtn.addEventListener("click", handleLogin);
+if(logoutBtn) logoutBtn.addEventListener("click", lock);
+if($("reloadBtn")) $("reloadBtn").addEventListener("click", loadAll);
+
 
 /* =========================
-   3) DATA LOADING
+   3) OTURUM KONTROLÜ
 ========================= */
+
+// Sayfa yüklendiğinde oturumu kontrol et
+function checkSessionAndInit() {
+    sb.auth.getSession().then(({ data: { session } }) => {
+        if (session && sessionStorage.getItem("bbo_dash_ok") === "true") {
+            unlock();
+        } else {
+            toggleViews(false);
+            setNote("");
+            if(loginBtn) loginBtn.disabled = false;
+        }
+    });
+}
+
+// Ana Başlangıç Fonksiyonu
+checkSessionAndInit();
+/* =========================
+   4) DATA LOADING (RLS yetkisi alındıktan sonra çalışacak)
+========================= */
+
 async function fetchAll(){
   setStatus("Veri çekiliyor…");
 
@@ -649,7 +698,6 @@ async function fetchAll(){
   if(eRes.error) throw eRes.error;
 
   // attendances (range)
-  // Not: büyük veride pagination gerekebilir. Şimdilik last N days limit 5000.
   const aRes = await sb
     .from("attendances")
     .select("id, event_id, full_name, phone, email, kvkk_accepted, created_at")
@@ -758,22 +806,20 @@ function buildAggregates(){
 }
 
 /* =========================
-   4) ANALYTICS (smart bits)
+   5) ANALYTICS (smart bits)
 ========================= */
 function computeForecastSameWeekday(){
-  // “beklenen yoğunluk”: son 28 gün içinde aynı weekday toplam ortalaması
   const now = new Date();
-  const wd = now.getDay(); // 0 sun
+  const wd = now.getDay(); 
   const start = new Date(); start.setDate(start.getDate() - 28);
   start.setHours(0,0,0,0);
 
-  const buckets = [0,0,0,0]; // 4 hafta
+  const buckets = [0,0,0,0]; 
   for(const a of state.attendances){
     const d = new Date(a.created_at);
     if(d < start) continue;
     if(d.getDay() !== wd) continue;
 
-    // hangi hafta dilimi
     const diffDays = Math.floor((now - d) / (1000*60*60*24));
     const w = Math.min(3, Math.floor(diffDays / 7));
     buckets[w] += 1;
@@ -783,9 +829,8 @@ function computeForecastSameWeekday(){
 }
 
 function dailySeries(){
-  // last N days daily counts
   const n = state.days;
-  const map = new Map(); // yyyy-mm-dd -> count
+  const map = new Map(); 
   const today = new Date(); today.setHours(0,0,0,0);
 
   for(let i=n-1;i>=0;i--){
@@ -803,7 +848,6 @@ function dailySeries(){
 }
 
 function heatmapWeekdayHour(){
-  // 7x24
   const grid = Array.from({length:7},()=>Array.from({length:24},()=>0));
   for(const a of state.attendances){
     const d = new Date(a.created_at);
@@ -811,7 +855,6 @@ function heatmapWeekdayHour(){
     const hr = d.getHours();
     grid[wd][hr] += 1;
   }
-  // peak
   let peak = {wd:0,hr:0,val:0};
   for(let w=0;w<7;w++){
     for(let h=0;h<24;h++){
@@ -823,7 +866,6 @@ function heatmapWeekdayHour(){
 }
 
 function topEventsSeries(enrichedEvents){
-  // top 12 by attendee_count in range
   const arr = [...enrichedEvents].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0)).slice(0,12);
   return {
     labels: arr.map(e => e.event_title || "Etkinlik"),
@@ -833,15 +875,10 @@ function topEventsSeries(enrichedEvents){
 }
 
 function newReturningSeries(){
-  // “yeni vs geri gelen”: aynı email/phone daha önce (seçilen aralığın ilk gününden önce) var mı?
-  // Bu dosya sadece seçilen aralık attendances çekiyor. “geri gelen” için geçmiş gerekir.
-  // Akıllı hile: seçilen aralık içinde ilk kez görülenler = “yeni”; aynı aralık içinde tekrar görülenler = “geri (aralık içi)”.
-  // İstersen bunu gerçek “tüm zamanlar” yapacak şekilde pagination+older pull ekleriz.
   const seen = new Set();
   let newCount = 0;
   let returningCount = 0;
 
-  // created_at desc geliyor; biz kronolojik yapalım:
   const rows = [...state.attendances].sort((a,b)=>a.created_at.localeCompare(b.created_at));
 
   for(const a of rows){
@@ -855,10 +892,8 @@ function newReturningSeries(){
 }
 
 function crossParticipationTopProjects(enrichedEvents, enrichedProjects){
-  // Top 6 project by attendee_count; matrix based on shared people (approx from attendances in range)
   const top = [...enrichedProjects].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0)).slice(0,6);
 
-  // build project -> people set from attendances in range
   const projPeople = new Map(top.map(p=>[p.id, new Set()]));
   for(const a of state.attendances){
     const ev = state.byEvent.get(a.event_id);
@@ -878,7 +913,6 @@ function crossParticipationTopProjects(enrichedEvents, enrichedProjects){
       const A = projPeople.get(ids[i]);
       const B = projPeople.get(ids[j]);
       let inter = 0;
-      // iterate smaller
       const [S,L] = A.size < B.size ? [A,B] : [B,A];
       for(const x of S) if(L.has(x)) inter++;
       mat[i][j] = inter;
@@ -888,7 +922,6 @@ function crossParticipationTopProjects(enrichedEvents, enrichedProjects){
 }
 
 function performanceTag(event){
-  // basit etiket: son check-in zamanına ve aktifliğe göre
   if(!event.attendee_count) return {label:"Yeni / boş", cls:"gray"};
   if(event.is_active && event.attendee_count >= 30) return {label:"Güçlü", cls:"good"};
   if(event.is_active && event.attendee_count >= 10) return {label:"Stabil", cls:"warn"};
@@ -897,7 +930,7 @@ function performanceTag(event){
 }
 
 /* =========================
-   5) RENDER
+   6) RENDER
 ========================= */
 function renderKPIs({enrichedEvents, enrichedProjects, todayCount}){
   const total = state.attendances.length;
@@ -910,7 +943,6 @@ function renderKPIs({enrichedEvents, enrichedProjects, todayCount}){
   const fc = computeForecastSameWeekday();
   $("kpiForecast").textContent = fmtTR(fc);
 
-  // trend tag (son 7 gün vs önceki 7 gün)
   const s = dailySeries().values;
   const last7 = s.slice(-7).reduce((a,b)=>a+b,0);
   const prev7 = s.slice(-14,-7).reduce((a,b)=>a+b,0);
@@ -955,12 +987,10 @@ function renderHeatmap(){
   const max = Math.max(1, ...grid.flat());
   const hours = [...Array(24)].map((_,i)=>i);
 
-  // peak label
   $("peakTag").textContent = peak.val
     ? `Pik: ${wdNames[peak.wd]} ${String(peak.hr).padStart(2,"0")}:00 (${peak.val})`
     : "Pik: —";
 
-  // build table
   let html = `<table class="heat"><thead><tr><th></th>`;
   for(const h of hours){
     if(h%3===0) html += `<th>${h}</th>`;
@@ -972,8 +1002,7 @@ function renderHeatmap(){
     html += `<tr><th>${wdNames[w]}</th>`;
     for(let h=0;h<24;h++){
       const v = grid[w][h];
-      const intensity = v / max; // 0..1
-      // Aynı renk ailesi, sadece opaklık değişiyor (temiz ve okunur)
+      const intensity = v / max; 
       const bg = `rgba(29,78,216, ${0.06 + 0.34*intensity})`;
       const br = `rgba(7,26,54, ${0.08 + 0.16*intensity})`;
       const color = intensity > 0.55 ? "rgba(255,255,255,.96)" : "var(--text)";
@@ -1020,9 +1049,8 @@ function renderNewReturningChart(){
 }
 
 function renderQC(enrichedEvents){
-  // Aggregate QC from attendances
   let kvkkNo = 0, badEmail = 0, badPhone = 0;
-  const possibleDup = new Map(); // fp -> count
+  const possibleDup = new Map(); 
 
   for(const a of state.attendances){
     if(!a.kvkk_accepted) kvkkNo++;
@@ -1038,7 +1066,6 @@ function renderQC(enrichedEvents){
     }
   }
 
-  // duplicates (within range)
   const dupCount = [...possibleDup.values()].filter(c=>c>=2).length;
 
   const items = [
@@ -1079,7 +1106,6 @@ function renderCross(enrichedEvents, enrichedProjects){
     return;
   }
 
-  // small matrix table
   const max = Math.max(1, ...mat.flat());
   let html = `<div style="overflow:auto;">
   <table class="table" style="min-width:520px;">
@@ -1116,8 +1142,7 @@ function renderActiveOps(enrichedEvents){
   }
 
   const baseUrl = location.origin + location.pathname.replace(/dashboard\.html$/,"");
-  // check-in sayfan farklıysa bunu değiştir:
-  const checkinPath = "index.html"; // senin kayıt/check-in sayfan
+  const checkinPath = "index.html"; 
   const makeQrLink = (code)=> `${baseUrl}${checkinPath}?event=${encodeURIComponent(code||"")}`;
 
   let html = ``;
@@ -1179,18 +1204,15 @@ function renderProjectsHierarchy(enrichedEvents, enrichedProjects){
     byP.get(e.project_id).push(e);
   }
 
-  // compute shown counts
   let shownProjects = 0;
   let shownEvents = 0;
 
-  // order projects by attendee_count desc
   const projOrder = [...enrichedProjects].sort((a,b)=>(b.attendee_count||0)-(a.attendee_count||0));
 
   let html = "";
   for(const p of projOrder){
     const evs = byP.get(p.id) || [];
     if(q){
-      // allow project name search too
       const pHit = (p.project_name||"").toLowerCase().includes(q);
       if(!pHit && evs.length===0) continue;
     } else {
@@ -1264,7 +1286,7 @@ function renderProjectsHierarchy(enrichedEvents, enrichedProjects){
 }
 
 /* =========================
-   6) DRAWER (Event detail)
+   7) DRAWER (Event detail)
 ========================= */
 function showDrawer(show){
   const m = $("drawerMask");
@@ -1313,7 +1335,6 @@ async function openDrawer(eventId){
     return;
   }
 
-  // load attendances for that event (range + event filter)
   $("drawerTitle").textContent = ev.event_title || "Etkinlik";
   $("drawerSub").textContent = `Kod: ${ev.event_code || "—"} · Proje: ${state.byProject.get(ev.project_id)?.project_name || "—"}`;
   $("drawerPill").textContent = "Yükleniyor…";
@@ -1333,7 +1354,7 @@ async function openDrawer(eventId){
     .limit(2000);
 
   if(res.error){
-    $("drawerStatus").textContent = "Hata: attendances okunamadı";
+    $("drawerStatus").textContent = "Hata: attendances okunamadı. RLS kontrol et.";
     $("drawerTbody").innerHTML = "";
     return;
   }
@@ -1381,7 +1402,7 @@ function renderDrawerTable(){
 }
 
 /* =========================
-   7) CSV
+   8) CSV
 ========================= */
 function downloadCSV(rows, filename){
   const headers = ["event_id","full_name","email","phone","kvkk_accepted","created_at"];
@@ -1435,7 +1456,7 @@ async function downloadCSVForEvent(eventId){
 }
 
 /* =========================
-   8) MAIN
+   9) MAIN
 ========================= */
 $("range").addEventListener("change", ()=>{
   state.days = Number($("range").value);
@@ -1443,7 +1464,6 @@ $("range").addEventListener("change", ()=>{
 });
 $("search").addEventListener("input", ()=>{
   state.search = $("search").value;
-  // render-only fast
   renderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
 });
 $("onlyActive").addEventListener("change", ()=>{
@@ -1463,11 +1483,9 @@ async function loadAll(){
 
     const { enrichedEvents, enrichedProjects, todayCount } = buildAggregates();
 
-    // store for quick re-render
     state._enrichedEvents = enrichedEvents;
     state._enrichedProjects = enrichedProjects;
 
-    // KPI & analysis
     renderKPIs({ enrichedEvents, enrichedProjects, todayCount });
     renderDailyChart();
     renderHeatmap();
@@ -1476,7 +1494,6 @@ async function loadAll(){
     renderQC(enrichedEvents);
     renderCross(enrichedEvents, enrichedProjects);
 
-    // ops + hierarchy
     renderActiveOps(enrichedEvents);
     renderProjectsHierarchy(enrichedEvents, enrichedProjects);
 
@@ -1484,9 +1501,8 @@ async function loadAll(){
 
   } catch(err){
     console.error(err);
-    setStatus("Hata: Supabase URL/KEY, RLS veya tablo/view kontrol et.");
-    // “fail loudly”
-    $("projects").innerHTML = `<div class="empty">Veri yüklenemedi. Console hata mesajını gör.</div>`;
+    setStatus("Hata: Veri yüklenemedi. RLS politikalarınızı kontrol edin.");
+    $("projects").innerHTML = `<div class="empty">Veri yüklenemedi. Konsoldaki hata mesajını kontrol edin.</div>`;
     $("activeEvents").innerHTML = `<div class="empty">Veri yok.</div>`;
     $("qcList").innerHTML = `<div class="empty">Veri yok.</div>`;
     $("crossWrap").innerHTML = `<div class="empty">Veri yok.</div>`;
