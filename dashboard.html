@@ -13,7 +13,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
   <style>
-    :root{
+    /* CSS kodunuz (Önceki versiyonda verilen stil) buraya gelmelidir. */
+    /* Yer kazanmak için burada tekrar etmiyorum, lütfen eski dosyanızdaki tüm <style> içeriğini buraya kopyalayın. */
+
+    :root{
       --bg0:#f6fbff; --bg1:#eaf4ff;
       --glass: rgba(255,255,255,.78);
       --glass2: rgba(255,255,255,.62);
@@ -28,8 +31,7 @@
       --shadow: 0 24px 60px rgba(2, 20, 60, .12);
       --radius: 22px;
     }
-    /* (CSS kısmı, önceki versiyonla aynı olduğu için kırpılmıştır. Tam CSS'i eski kodunuzdan alınız.) */
-    *{box-sizing:border-box}
+    *{box-sizing:border-box}
     html,body{height:100%}
     body{
         margin:0;
@@ -187,7 +189,7 @@
                 <div class="card pad kpi col-4">
           <div class="label">Bugün Kayıt</div>
           <div class="value" id="kpiToday">—</div> 
-          <div class="sub" id="kpiTodaySub">24 saatlik dilim</div>
+          <div class="sub" id="kpiTodaySub">Son 24 saatlik dilim</div>
         </div>
       </div>
 
@@ -230,14 +232,11 @@
   <script>
     // =========================
     // 1) Supabase bilgilerini buraya gir
+    // Lütfen kendi URL ve ANON KEY değerlerinizle değiştirin!
     // =========================
     const SUPABASE_URL = "https://iqrmitiszsyewgcsvuvs.supabase.co";
-  
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU1OTR9.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc";
     
-    // Eğer authenticated role üzerinden çalışmak istiyorsanız, giriş yapmanız gerekir.
-    // Ancak formda anon key kullandığımız için, burada da aynı key'i kullanmak sorun yaratmaz.
-
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const loading = document.getElementById("loading");
@@ -269,24 +268,23 @@
     // ==================================
     async function checkAuth(){
       try{
+        // Kullanıcı oturumunu kontrol et (authenticated rolü için)
         const { data: { user } } = await sb.auth.getUser();
 
         if(!user){
-          // Kullanıcı giriş yapmamışsa, login sayfasına yönlendir.
-          window.location.href = "login.html"; // Varsayalım bir login sayfanız var
+          window.location.href = "login.html"; // Login sayfasına yönlendir
           return;
         }
-        // Giriş başarılı, Dashboard'u yükle
+        
         await loadEvents();
         eventSelect.addEventListener("change", loadDashboardData);
         refreshBtn.addEventListener("click", loadDashboardData);
         logoutBtn.addEventListener("click", handleLogout);
         
-        // Sayfa yüklendiğinde ilk verileri çek
         loadDashboardData(); 
 
       }catch(err){
-        handleError(err);
+        handleError("Yetkilendirme hatası (RLS Kontrolü): " + err.message);
       }
     }
 
@@ -295,7 +293,7 @@
       if(error){
         alert("Çıkış yapılırken hata: " + error.message);
       } else {
-        window.location.href = "login.html"; // Login sayfasına yönlendir
+        window.location.href = "login.html"; 
       }
     }
 
@@ -311,7 +309,6 @@
 
         if(error) throw error;
 
-        // Seçim kutusunu temizle
         eventSelect.innerHTML = `<option value="">Tüm Aktif Etkinlikler</option>`;
 
         data.forEach(e => {
@@ -335,7 +332,6 @@
       content.style.display = "none";
 
       const selectedEventId = eventSelect.value || null;
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
       // -----------------
@@ -355,50 +351,47 @@
       }
 
       // -----------------
-      // B) TEKİL KATILIMCI (CRM)
+      // B) TEKİL KATILIMCI (CRM - participants tablosundan veya distinct sayım)
       // -----------------
       try{
-        // Eğer etkinlik seçiliyse, sadece o etkinliğe katılan tekil kişileri say
-        let uniqueCountQuery;
-        
         if (selectedEventId) {
-          // Seçili etkinliğe ait tekil participant_id'leri say
-          uniqueCountQuery = await sb
+          // Seçili etkinliğe katılan tekil participant_id'leri say
+          // Supabase'te doğrudan COUNT(DISTINCT) olmadığı için CSV metodu kullanılır:
+          const { data: csvData, error: csvError } = await sb
             .from("attendances")
             .select("participant_id", { count: "exact" })
             .eq("event_id", selectedEventId)
-            .not("participant_id", "is", null) // participant_id null olmayanları say
-            .csv(); // Distinct sayım için özel Supabase metodu
+            .not("participant_id", "is", null)
+            .csv();
           
-          // CSV ile gelen string'den distinct sayımı yap
-          const ids = uniqueCountQuery.data.trim().split('\n').slice(1);
+          if(csvError) throw csvError;
+
+          // CSV verisini parse et ve benzersiz ID'leri Set kullanarak say
+          const ids = csvData.trim().split('\n').slice(1);
           const distinctIds = new Set(ids.filter(id => id !== ''));
           kpiUnique.textContent = distinctIds.size.toLocaleString("tr-TR") || "0";
 
         } else {
-          // Tüm zamanlar ve tüm etkinlikler için participants tablosunu say
-          uniqueCountQuery = await sb.from("participants").select("id", { count: "exact" });
-          kpiUnique.textContent = uniqueCountQuery.count.toLocaleString("tr-TR") || "0";
+          // Etkinlik seçilmediyse, doğrudan participants tablosunu say
+          const { count: uniqueCount, error: uniqueError } = await sb
+            .from("participants")
+            .select("id", { count: "exact" });
+          
+          if(uniqueError) throw uniqueError;
+          kpiUnique.textContent = uniqueCount.toLocaleString("tr-TR") || "0";
         }
-        
-        if(uniqueCountQuery.error && uniqueCountQuery.error.code !== 'PGRST104'){ // PGRST104 = csv() hatası, ignore edilebilir
-          throw uniqueCountQuery.error;
-        }
-
       }catch(err){
         handleError("Tekil katılımcı sayısı çekilemedi: " + err.message);
         return;
       }
 
       // -----------------
-      // C) BUGÜN KAYIT
+      // C) BUGÜN KAYIT (Son 24 saat)
       // -----------------
       try{
         let query = sb.from("attendances").select("id", { count: "exact" });
         if(selectedEventId) query = query.eq("event_id", selectedEventId);
         
-        // ISO tarih formatını kullanarak bugünkü kayıtları filtrele
-        // created_at sütunu timestamp with time zone olduğu için gt/lt kullan
         query = query.gte("created_at", yesterday);
 
         const { count: todayCount, error: todayError } = await query;
@@ -425,7 +418,7 @@
 
         if(recordsError) throw recordsError;
 
-        recordsBody.innerHTML = ""; // Tabloyu temizle
+        recordsBody.innerHTML = ""; 
 
         if(records && records.length > 0){
           records.forEach((r, index) => {
@@ -448,21 +441,20 @@
       }
 
       // -----------------
-      // E) GRAFİK VERİSİ
+      // E) GRAFİK VERİSİ (get_hourly_attendance fonksiyonunu çağırır)
       // -----------------
       try {
         const { data: chartData, error: chartError } = await sb.rpc('get_hourly_attendance', {
           p_event_id: selectedEventId,
-          p_days: 1 // Son 24 saat
+          p_days: 1 
         });
 
         if (chartError) throw chartError;
 
         updateChart(chartData || []);
       } catch (err) {
-        // Eğer get_hourly_attendance fonksiyonu yoksa hata verecektir.
         updateChart([]); 
-        console.warn("Grafik verisi çekilemedi. get_hourly_attendance fonksiyonunu kurduğunuzdan emin olun.");
+        console.warn("Grafik verisi çekilemedi. RLS execute iznini kontrol edin.");
       }
 
       // Başarılı yükleme
@@ -471,14 +463,16 @@
     }
 
     // ==================================
-    // 5) GRAFİK (Chart.js)
+    // 5) GRAFİK ÇİZİMİ (Chart.js)
     // ==================================
     function updateChart(data){
+      // (Grafik çizim mantığı aynı kalmıştır)
+
+      // ... (Grafik çizim kodu) ...
+      
       // Saatleri ve sayıları al
       const labels = data.map(d => {
         const h = d.hour_of_day;
-        // Şu anki saat dilimine göre düzeltme (UTC'den yerel saate)
-        const currentHour = new Date().getHours();
         const displayHour = (h % 24).toString().padStart(2, '0');
         return `${displayHour}:00`;
       });
@@ -486,7 +480,7 @@
 
       const ctx = document.getElementById('hourlyChart').getContext('2d');
 
-      if(hourlyChart) hourlyChart.destroy(); // Önceki grafiği yok et
+      if(hourlyChart) hourlyChart.destroy(); 
 
       hourlyChart = new Chart(ctx, {
         type: 'line',
@@ -516,47 +510,6 @@
       });
     }
     
-    // ==================================
-    // 6) GRAFİK İÇİN SQL FONKSİYONU
-    // ==================================
-    /*
-    Lütfen Supabase SQL Editor'da bu fonksiyonu çalıştırın:
-    
-    CREATE OR REPLACE FUNCTION public.get_hourly_attendance(
-        p_event_id uuid DEFAULT NULL,
-        p_days integer DEFAULT 1
-    )
-    RETURNS TABLE(hour_of_day integer, count bigint) 
-    LANGUAGE plpgsql
-    AS $$
-    DECLARE
-        start_time timestamp with time zone := now() - interval '1 hour' * 24 * p_days;
-    BEGIN
-        RETURN QUERY
-        SELECT
-            EXTRACT(HOUR FROM created_at AT TIME ZONE 'UTC') AS hour_of_day,
-            COUNT(id) AS count
-        FROM
-            attendances
-        WHERE
-            created_at >= start_time
-            AND (p_event_id IS NULL OR event_id = p_event_id)
-        GROUP BY
-            hour_of_day
-        ORDER BY
-            hour_of_day;
-    END;
-    $$;
-
-    -- RLS İzni (Dashboard çalışırken):
-    CREATE POLICY "Enable execute for authenticated users" 
-      ON "public"."get_hourly_attendance"
-      AS PERMISSIVE FOR EXECUTE
-      TO authenticated
-      USING (true);
-    */
-
-
     // Sayfa başlangıcı
     checkAuth();
   </script>
