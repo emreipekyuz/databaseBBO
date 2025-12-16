@@ -529,16 +529,15 @@
 
 <script>
 /* =========================
-   0) CONFIG (SEN DOLDURACAKSIN)
+   0) CONFIG (KENDİ SUPABASE BİLGİLERİNİZİ GİRİN)
 ========================= */
-// KENDİ SUPABASE BİLGİLERİNİZİ GİRİN:
 const SUPABASE_URL = "https://mkmzclarjfnwqnjexgwy.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXpjbGFyamZud3FuamV4Z3d5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODk4MTksImV4cCI6MjA4MTM2NTgxOX0.r5RpP-r0P8fbnRP3rt_Bwn12CmMESbXSn86kg4FWzfM";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =========================
-   1) STATE & DOM
+   1) STATE & DOM & UTILS
 ========================= */
 const state = {
   days: 30,
@@ -623,7 +622,7 @@ function lock(){
 function unlock(){
     toggleViews(true);
     sessionStorage.setItem("bbo_dash_ok", "true");
-    loadAll(); // Tüm veriyi yükle
+    loadAll(); 
 }
 
 async function handleLogin(e) {
@@ -640,7 +639,6 @@ async function handleLogin(e) {
     setNote("Giriş yapılıyor...");
     loginBtn.disabled = true;
 
-    // Supabase Auth ile giriş denemesi
     const { error } = await sb.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -650,22 +648,18 @@ async function handleLogin(e) {
         return;
     }
 
-    // Başarılı girişten sonra
     setNote("Giriş Başarılı.");
     unlock();
 }
 
-// Olay Dinleyicileri
 if(loginBtn) loginBtn.addEventListener("click", handleLogin);
 if(logoutBtn) logoutBtn.addEventListener("click", lock);
 if($("reloadBtn")) $("reloadBtn").addEventListener("click", loadAll);
-
 
 /* =========================
    3) OTURUM KONTROLÜ
 ========================= */
 
-// Sayfa yüklendiğinde oturumu kontrol et
 function checkSessionAndInit() {
     sb.auth.getSession().then(({ data: { session } }) => {
         if (session && sessionStorage.getItem("bbo_dash_ok") === "true") {
@@ -678,135 +672,137 @@ function checkSessionAndInit() {
     });
 }
 
-// Ana Başlangıç Fonksiyonu
 checkSessionAndInit();
+
 /* =========================
-   4) DATA LOADING (RLS yetkisi alındıktan sonra çalışacak)
+   4) DATA LOADING (SÜTUN ADLARI DÜZELTİLDİ)
 ========================= */
 
 async function fetchAll(){
-  setStatus("Veri çekiliyor…");
+    setStatus("Veri çekiliyor…");
 
-  const sinceISO = toISOStartDaysAgo(state.days);
+    const sinceISO = toISOStartDaysAgo(state.days);
 
-  // projects
-  const pRes = await sb.from("projects").select("id, project_name").order("project_name",{ascending:true});
-  if(pRes.error) throw pRes.error;
+    // projects sorgusu (DÜZELTİLDİ: 'name' kullanıldı)
+    const pRes = await sb.from("projects").select("id, name, is_active").order("name",{ascending:true});
+    if(pRes.error) throw pRes.error;
 
-  // events
-  const eRes = await sb.from("events").select("id, project_id, event_title, event_code, is_active, created_at").order("created_at",{ascending:false});
-  if(eRes.error) throw eRes.error;
+    // events sorgusu (DÜZELTİLDİ: 'title' kullanıldı)
+    const eRes = await sb.from("events").select("id, project_id, title, event_code, is_active, created_at").order("created_at",{ascending:false});
+    if(eRes.error) throw eRes.error;
 
-  // attendances (range)
-  const aRes = await sb
-    .from("attendances")
-    .select("id, event_id, full_name, phone, email, kvkk_accepted, created_at")
-    .gte("created_at", sinceISO)
-    .order("created_at", { ascending: false })
-    .limit(5000);
+    // attendances sorgusu (DÜZELTİLDİ: 'kvkk_consent' kullanıldı)
+    const aRes = await sb
+      .from("attendances")
+      .select("id, event_id, full_name, phone, email, kvkk_consent, created_at")
+      .gte("created_at", sinceISO)
+      .order("created_at", { ascending: false })
+      .limit(5000);
 
-  if(aRes.error) throw aRes.error;
+    if(aRes.error) throw aRes.error;
 
-  state.projects = pRes.data || [];
-  state.events = eRes.data || [];
-  state.attendances = aRes.data || [];
+    state.projects = pRes.data || [];
+    state.events = eRes.data || [];
+    state.attendances = aRes.data || [];
 
-  // maps
-  state.byProject = new Map(state.projects.map(p => [p.id, p]));
-  state.byEvent = new Map(state.events.map(e => [e.id, e]));
+    // maps
+    state.byProject = new Map(state.projects.map(p => [p.id, p]));
+    state.byEvent = new Map(state.events.map(e => [e.id, e]));
 }
 
 function buildAggregates(){
-  // eventStats: {count, last, kvkkNo, badEmail, badPhone, uniqPeopleSet}
-  const eventStats = new Map();
-  const projectStats = new Map(); // by project_id
+    const eventStats = new Map();
+    const projectStats = new Map();
 
-  const todayISO = toISOStartOfDay(new Date());
-  let todayCount = 0;
+    const todayISO = toISOStartOfDay(new Date());
+    let todayCount = 0;
 
-  for(const a of state.attendances){
-    if(a.created_at >= todayISO) todayCount++;
+    for(const a of state.attendances){
+        if(a.created_at >= todayISO) todayCount++;
 
-    const e = state.byEvent.get(a.event_id);
-    if(!e) continue;
+        const e = state.byEvent.get(a.event_id);
+        if(!e) continue;
 
-    const evId = e.id;
-    if(!eventStats.has(evId)){
-      eventStats.set(evId, {
-        event_id: evId,
-        count:0,
-        last: null,
-        kvkkNo:0,
-        badEmail:0,
-        badPhone:0,
-        people: new Set(), // email/phone fingerprint
-      });
+        const evId = e.id;
+        if(!eventStats.has(evId)){
+            eventStats.set(evId, {
+                event_id: evId,
+                count:0,
+                last: null,
+                kvkkNo:0,
+                badEmail:0,
+                badPhone:0,
+                people: new Set(),
+            });
+        }
+        const s = eventStats.get(evId);
+        s.count++;
+        if(!s.last || a.created_at > s.last) s.last = a.created_at;
+
+        // DÜZELTME: kvkk_consent kullanıldı
+        const kv = !!a.kvkk_consent; 
+        if(!kv) s.kvkkNo++;
+
+        const em = normEmail(a.email);
+        if(!isValidEmail(em)) s.badEmail++;
+
+        const ph = normPhone(a.phone);
+        const digits = ph.replace(/[^\d]/g,"");
+        if(digits.length < 10) s.badPhone++;
+
+        const fp = em || ph || (a.full_name || "").trim().toLowerCase();
+        if(fp) s.people.add(fp);
+
+        const prId = e.project_id;
+        if(!projectStats.has(prId)){
+            projectStats.set(prId, {
+                project_id: prId,
+                count:0,
+                events: new Set(),
+                last:null,
+                people: new Set(),
+            });
+        }
+        const ps = projectStats.get(prId);
+        ps.count++;
+        ps.events.add(evId);
+        if(!ps.last || a.created_at > ps.last) ps.last = a.created_at;
+        if(fp) ps.people.add(fp);
     }
-    const s = eventStats.get(evId);
-    s.count++;
-    if(!s.last || a.created_at > s.last) s.last = a.created_at;
 
-    const kv = !!a.kvkk_accepted;
-    if(!kv) s.kvkkNo++;
+    // DÜZELTME: projects ve events verilerini eşleme (code'un beklediği isimlere)
+    const enrichedEvents = state.events.map(ev => {
+        const st = eventStats.get(ev.id) || {count:0,last:null,kvkkNo:0,badEmail:0,badPhone:0,people:new Set()};
+        return {
+            ...ev,
+            // Sütun adı eşlemesi
+            event_title: ev.title, 
+            attendee_count: st.count,
+            last_checkin_at: st.last,
+            qc: { kvkkNo: st.kvkkNo, badEmail: st.badEmail, badPhone: st.badPhone },
+            uniq_people: st.people.size
+        };
+    });
 
-    const em = normEmail(a.email);
-    if(!isValidEmail(em)) s.badEmail++;
+    const enrichedProjects = state.projects.map(p => {
+        const ps = projectStats.get(p.id) || {count:0,events:new Set(),last:null,people:new Set()};
+        const evCount = ps.events.size;
+        return {
+            ...p,
+            // Sütun adı eşlemesi
+            project_name: p.name, 
+            attendee_count: ps.count,
+            events_count: evCount,
+            last_checkin_at: ps.last,
+            uniq_people: ps.people.size
+        };
+    });
 
-    const ph = normPhone(a.phone);
-    // telefon en az 10 rakam gibi kaba kontrol
-    const digits = ph.replace(/[^\d]/g,"");
-    if(digits.length < 10) s.badPhone++;
-
-    const fp = em || ph || (a.full_name || "").trim().toLowerCase();
-    if(fp) s.people.add(fp);
-
-    const prId = e.project_id;
-    if(!projectStats.has(prId)){
-      projectStats.set(prId, {
-        project_id: prId,
-        count:0,
-        events: new Set(),
-        last:null,
-        people: new Set(),
-      });
-    }
-    const ps = projectStats.get(prId);
-    ps.count++;
-    ps.events.add(evId);
-    if(!ps.last || a.created_at > ps.last) ps.last = a.created_at;
-    if(fp) ps.people.add(fp);
-  }
-
-  // attach computed stats into events list
-  const enrichedEvents = state.events.map(ev => {
-    const st = eventStats.get(ev.id) || {count:0,last:null,kvkkNo:0,badEmail:0,badPhone:0,people:new Set()};
-    return {
-      ...ev,
-      attendee_count: st.count,
-      last_checkin_at: st.last,
-      qc: { kvkkNo: st.kvkkNo, badEmail: st.badEmail, badPhone: st.badPhone },
-      uniq_people: st.people.size
-    };
-  });
-
-  // project summary
-  const enrichedProjects = state.projects.map(p => {
-    const ps = projectStats.get(p.id) || {count:0,events:new Set(),last:null,people:new Set()};
-    const evCount = ps.events.size;
-    return {
-      ...p,
-      attendee_count: ps.count,
-      events_count: evCount,
-      last_checkin_at: ps.last,
-      uniq_people: ps.people.size
-    };
-  });
-
-  return { enrichedEvents, enrichedProjects, todayCount };
+    return { enrichedEvents, enrichedProjects, todayCount };
 }
 
 /* =========================
-   5) ANALYTICS (smart bits)
+   5) ANALYTICS (Geri kalan analitik mantığı aynı kaldı)
 ========================= */
 function computeForecastSameWeekday(){
   const now = new Date();
@@ -930,7 +926,7 @@ function performanceTag(event){
 }
 
 /* =========================
-   6) RENDER
+   6) RENDER (Geri kalan render mantığı aynı kaldı)
 ========================= */
 function renderKPIs({enrichedEvents, enrichedProjects, todayCount}){
   const total = state.attendances.length;
@@ -1053,7 +1049,9 @@ function renderQC(enrichedEvents){
   const possibleDup = new Map(); 
 
   for(const a of state.attendances){
-    if(!a.kvkk_accepted) kvkkNo++;
+    // DÜZELTME: kvkk_consent kullanıldı
+    if(!a.kvkk_consent) kvkkNo++; 
+    
     const em = normEmail(a.email);
     if(!isValidEmail(em)) badEmail++;
     const ph = normPhone(a.phone);
@@ -1189,8 +1187,7 @@ function renderProjectsHierarchy(enrichedEvents, enrichedProjects){
   const q = (state.search||"").trim().toLowerCase();
   const onlyActive = state.onlyActive;
 
-  // group events by project
-  const byP = new Map(); // project_id -> events[]
+  const byP = new Map(); 
   for(const e of enrichedEvents){
     if(onlyActive && !e.is_active) continue;
 
@@ -1279,14 +1276,13 @@ function renderProjectsHierarchy(enrichedEvents, enrichedProjects){
   $("projects").innerHTML = html || `<div class="empty">Bu filtrelerle gösterilecek proje/etkinlik yok.</div>`;
   $("shownTag").textContent = `${fmtTR(shownProjects)} proje / ${fmtTR(shownEvents)} etkinlik`;
 
-  // bind open buttons
   $("projects").querySelectorAll("[data-open]").forEach(btn=>{
     btn.addEventListener("click", ()=> openDrawer(btn.getAttribute("data-open")));
   });
 }
 
 /* =========================
-   7) DRAWER (Event detail)
+   7) DRAWER (Etkinlik Detayı)
 ========================= */
 function showDrawer(show){
   const m = $("drawerMask");
@@ -1347,7 +1343,7 @@ async function openDrawer(eventId){
   const sinceISO = toISOStartDaysAgo(state.days);
   const res = await sb
     .from("attendances")
-    .select("id, event_id, full_name, phone, email, kvkk_accepted, created_at")
+    .select("id, event_id, full_name, phone, email, kvkk_consent, created_at") // DÜZELTİLDİ
     .eq("event_id", eventId)
     .gte("created_at", sinceISO)
     .order("created_at", { ascending: false })
@@ -1384,7 +1380,8 @@ function renderDrawerTable(){
   $("drawerStatus").textContent = `${fmtTR(filtered.length)} kayıt`;
 
   const tr = (r)=>{
-    const kv = r.kvkk_accepted ? `<span class="pill good">Evet</span>` : `<span class="pill bad">Hayır</span>`;
+    // DÜZELTME: kvkk_consent kullanıldı
+    const kv = r.kvkk_consent ? `<span class="pill good">Evet</span>` : `<span class="pill bad">Hayır</span>`; 
     return `
       <tr>
         <td>${escapeHtml(r.full_name||"")}</td>
@@ -1402,10 +1399,10 @@ function renderDrawerTable(){
 }
 
 /* =========================
-   8) CSV
+   8) CSV (Sütun adları düzeltildi)
 ========================= */
 function downloadCSV(rows, filename){
-  const headers = ["event_id","full_name","email","phone","kvkk_accepted","created_at"];
+  const headers = ["event_id","full_name","email","phone","kvkk_consent","created_at"];
   const esc = (v)=>{
     const s = (v===null || v===undefined) ? "" : String(v);
     const safe = s.replaceAll('"','""');
@@ -1420,7 +1417,7 @@ function downloadCSV(rows, filename){
       r.full_name,
       r.email,
       r.phone,
-      r.kvkk_accepted,
+      r.kvkk_consent, // DÜZELTİLDİ
       r.created_at
     ].map(esc).join(","));
   }
@@ -1440,7 +1437,7 @@ async function downloadCSVForEvent(eventId){
   const sinceISO = toISOStartDaysAgo(state.days);
   const res = await sb
     .from("attendances")
-    .select("event_id, full_name, email, phone, kvkk_accepted, created_at")
+    .select("event_id, full_name, email, phone, kvkk_consent, created_at") // DÜZELTİLDİ
     .eq("event_id", eventId)
     .gte("created_at", sinceISO)
     .order("created_at", { ascending: false })
@@ -1458,15 +1455,15 @@ async function downloadCSVForEvent(eventId){
 /* =========================
    9) MAIN
 ========================= */
-$("range").addEventListener("change", ()=>{
+if($("range")) $("range").addEventListener("change", ()=>{
   state.days = Number($("range").value);
   loadAll();
 });
-$("search").addEventListener("input", ()=>{
+if($("search")) $("search").addEventListener("input", ()=>{
   state.search = $("search").value;
   renderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
 });
-$("onlyActive").addEventListener("change", ()=>{
+if($("onlyActive")) $("onlyActive").addEventListener("change", ()=>{
   state.onlyActive = $("onlyActive").checked;
   renderProjectsHierarchy(state._enrichedEvents, state._enrichedProjects);
 });
@@ -1501,7 +1498,7 @@ async function loadAll(){
 
   } catch(err){
     console.error(err);
-    setStatus("Hata: Veri yüklenemedi. RLS politikalarınızı kontrol edin.");
+    setStatus("Hata: Veri yüklenemedi. RLS politikalarınızı veya tablo/sütun adlarınızı kontrol edin.");
     $("projects").innerHTML = `<div class="empty">Veri yüklenemedi. Konsoldaki hata mesajını kontrol edin.</div>`;
     $("activeEvents").innerHTML = `<div class="empty">Veri yok.</div>`;
     $("qcList").innerHTML = `<div class="empty">Veri yok.</div>`;
