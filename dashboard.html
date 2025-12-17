@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EventHub Pro | Ultimate CRM Dashboard</title>
+    <title>EventHub Pro | Yönetim Paneli</title>
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
@@ -12,317 +12,319 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/locale/tr.min.js"></script>
 
     <style>
-        /* --- TEMEL AYARLAR & DEĞİŞKENLER --- */
+        /* --- TEMEL CSS --- */
         :root {
             --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #eff6ff;
             --secondary: #64748b; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
             --purple: #8b5cf6; --bg: #f8fafc; --surface: #ffffff; --border: #e2e8f0;
             --text-main: #0f172a; --text-muted: #64748b;
-            --radius-lg: 16px; --radius-md: 10px; --radius-sm: 6px;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --radius-lg: 16px; --radius-md: 10px;
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
             --transition: all 0.2s ease-in-out;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text-main); height: 100vh; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; font-family: 'Inter', system-ui, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); height: 100vh; overflow: hidden; }
         
-        /* --- LAYOUT --- */
-        .app-container { display: flex; height: 100%; }
+        /* --- LOGIN EKRANI --- */
+        #loginSection {
+            position: fixed; inset: 0; background: var(--bg); z-index: 5000;
+            display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .login-card {
+            background: white; padding: 2.5rem; border-radius: 20px; width: 100%; max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid var(--border);
+            text-align: center;
+        }
+        .login-logo {
+            width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--purple));
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            color: white; margin: 0 auto 1.5rem;
+        }
+        .login-input {
+            width: 100%; padding: 0.8rem 1rem; margin-bottom: 1rem; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 1rem; transition: var(--transition);
+        }
+        .login-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .login-btn {
+            width: 100%; padding: 0.8rem; background: var(--primary); color: white; border: none;
+            border-radius: 10px; font-weight: 700; cursor: pointer; transition: var(--transition);
+        }
+        .login-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        /* --- DASHBOARD LAYOUT (Gizli Başlar) --- */
+        #dashboardSection { display: none; height: 100%; width: 100%; }
+        .app-container { display: flex; height: 100%; width: 100%; }
         
         /* Sidebar */
         .sidebar { width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 50; transition: width 0.3s; }
         .brand { padding: 1.5rem; display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--border); }
         .brand-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), var(--purple)); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; }
-        .brand-text h1 { font-size: 1.1rem; font-weight: 700; color: var(--text-main); }
-        .brand-text span { font-size: 0.75rem; color: var(--secondary); font-weight: 500; }
+        .brand-text h1 { font-size: 1.1rem; font-weight: 700; }
         
         .nav { flex: 1; padding: 1.5rem 1rem; overflow-y: auto; }
-        .nav-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; padding-left: 0.5rem; }
-        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: var(--text-muted); text-decoration: none; border-radius: var(--radius-md); transition: var(--transition); cursor: pointer; margin-bottom: 0.25rem; }
+        .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: var(--text-muted); text-decoration: none; border-radius: var(--radius-md); cursor: pointer; margin-bottom: 0.25rem; transition: var(--transition); }
         .nav-item:hover { background: var(--bg); color: var(--primary); }
         .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
         .nav-badge { margin-left: auto; background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
 
         .user-profile { padding: 1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(to right, var(--primary), var(--purple)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(to right, var(--primary), var(--purple)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; }
         
-        /* Main Content */
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        
-        /* Header */
+        /* Main & Content */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .header { height: 70px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; }
         .search-wrap { position: relative; width: 300px; }
+        .search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border); border-radius: 10px; }
         .search-wrap i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 18px; }
-        .search-input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.9rem; transition: var(--transition); }
-        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
         
-        .header-actions { display: flex; gap: 1rem; }
-        .btn-icon { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); position: relative; }
-        .btn-icon:hover { background: var(--bg); color: var(--primary); border-color: var(--primary); }
-        .notify-dot { position: absolute; top: 0; right: 0; width: 12px; height: 12px; background: var(--danger); border: 2px solid var(--surface); border-radius: 50%; }
-
-        /* Content Scroll Area */
         .content { padding: 2rem; overflow-y: auto; height: calc(100vh - 70px); }
-        .section-header { display: flex; justify-content: space-between; align-items: end; margin-bottom: 2rem; }
-        .page-title { font-size: 1.8rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.5px; }
-        .page-desc { color: var(--text-muted); margin-top: 0.25rem; font-size: 0.95rem; }
-
-        /* KPI Grid */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .kpi-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); position: relative; overflow: hidden; transition: var(--transition); }
-        .kpi-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
-        .kpi-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
-        .kpi-icon.blue { background: var(--primary-light); color: var(--primary); }
-        .kpi-icon.green { background: #dcfce7; color: var(--success); }
-        .kpi-icon.purple { background: #f3e8ff; color: var(--purple); }
-        .kpi-label { font-size: 0.9rem; color: var(--text-muted); font-weight: 500; }
-        .kpi-value { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-top: 0.25rem; }
         
-        /* Filter Bar */
-        .filter-bar { background: var(--surface); padding: 1rem; border-radius: var(--radius-lg); border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 2rem; }
-        .select-input { padding: 0.6rem 2rem 0.6rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); bg: var(--surface); font-size: 0.9rem; color: var(--text-main); cursor: pointer; }
-        
-        /* Buttons */
-        .btn { padding: 0.6rem 1.2rem; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.5rem; transition: var(--transition); }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
-        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        /* Components */
+        .btn { padding: 0.6rem 1.2rem; border-radius: 10px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-        .btn-outline:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
-
-        /* Chart Section */
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .kpi-card { background: var(--surface); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); transition: var(--transition); }
+        .kpi-card:hover { transform: translateY(-3px); }
+        .kpi-value { font-size: 2rem; font-weight: 800; color: var(--text-main); margin-top: 0.5rem; }
+        
         .charts-wrapper { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        .chart-card { background: var(--surface); padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+        .chart-card { background: var(--surface); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); }
         
         /* CRM Grid */
-        .crm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
-        .person-card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 1.5rem; cursor: pointer; transition: var(--transition); position: relative; }
-        .person-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
-        .vip-tag { position: absolute; top: 1rem; right: 1rem; background: #fef3c7; color: var(--warning); padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fde68a; }
-        .person-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-        .person-name { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
-        .person-mail { font-size: 0.85rem; color: var(--text-muted); }
-        .person-stats { display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--bg); }
-        .p-stat { text-align: center; }
-        .p-val { display: block; font-weight: 800; color: var(--primary); font-size: 1.1rem; }
-        .p-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; }
-
-        /* Data Table (Events View) */
-        .table-wrap { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+        .crm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .person-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; cursor: pointer; transition: var(--transition); position: relative; }
+        .person-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .vip-tag { position: absolute; top: 1rem; right: 1rem; background: #fffbeb; color: #b45309; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fcd34d; }
+        
+        /* Table */
+        .table-wrap { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: var(--bg); padding: 1rem; text-align: left; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text-main); }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: var(--primary-light); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: var(--bg); font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
         .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-        .status-active { background: #dcfce7; color: var(--success); }
-        .status-passive { background: #f1f5f9; color: var(--text-muted); }
+        .active-badge { background: #dcfce7; color: #166534; }
+        .passive-badge { background: #f1f5f9; color: #64748b; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; }
-        .modal { background: var(--surface); width: 90%; max-width: 650px; border-radius: var(--radius-lg); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease; max-height: 85vh; display: flex; flex-direction: column; }
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal { background: var(--surface); width: 90%; max-width: 600px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column; }
         .modal-body { padding: 1.5rem; overflow-y: auto; }
-        .timeline-item { position: relative; padding-left: 1.5rem; padding-bottom: 1.5rem; border-left: 2px solid var(--border); }
-        .timeline-item::before { content: ''; position: absolute; left: -5px; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
-        .timeline-date { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
-        .timeline-title { font-weight: 600; color: var(--text-main); }
 
         /* Loading & Toast */
-        #loadingBar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--purple)); width: 0%; z-index: 3000; transition: width 0.3s; }
-        .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface); padding: 1rem 1.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); border-left: 4px solid var(--success); display: flex; align-items: center; gap: 1rem; transform: translateX(120%); transition: transform 0.3s; z-index: 3000; }
-        .toast.show { transform: translateX(0); }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        #loadingBar { position: fixed; top: 0; left: 0; height: 3px; background: var(--primary); width: 0%; z-index: 6000; transition: width 0.3s; }
+        .toast { position: fixed; bottom: 2rem; right: 2rem; background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-left: 4px solid var(--success); display: none; z-index: 6000; align-items: center; gap: 10px; }
+        
         @media (max-width: 1024px) { .charts-wrapper { grid-template-columns: 1fr; } }
-        @media (max-width: 768px) { .sidebar { position: fixed; left: -260px; height: 100%; } .sidebar.open { left: 0; } .main { margin-left: 0; width: 100%; } .header { padding: 0 1rem; } .search-wrap { display: none; } }
     </style>
 </head>
 <body>
 
-<div id="loadingBar"></div>
-<div id="toast" class="toast"><i data-lucide="check-circle" style="color:var(--success)"></i><span id="toastMsg">İşlem başarılı</span></div>
+    <div id="loadingBar"></div>
+    <div id="toast" class="toast"><i data-lucide="check-circle" style="color:var(--success)"></i><span id="toastMsg">İşlem başarılı</span></div>
 
-<div class="app-container">
-    
-    <aside class="sidebar" id="sidebar">
-        <div class="brand">
-            <div class="brand-icon"><i data-lucide="cloud-lightning"></i></div>
-            <div class="brand-text"><h1>EventHub</h1><span>Pro Manager</span></div>
-        </div>
-        
-        <nav class="nav">
-            <div class="nav-label">ANA MENÜ</div>
-            <a class="nav-item active" onclick="switchView('dashboard')"><i data-lucide="layout-dashboard"></i>Dashboard</a>
-            <a class="nav-item" onclick="switchView('crm')"><i data-lucide="users"></i>CRM / Kişiler <span class="nav-badge" id="crmCountBadge">0</span></a>
-            <a class="nav-item" onclick="switchView('events')"><i data-lucide="calendar"></i>Etkinlikler</a>
+    <div id="loginSection">
+        <div class="login-card">
+            <div class="login-logo"><i data-lucide="lock" style="width:32px; height:32px;"></i></div>
+            <h2 style="margin-bottom:0.5rem; color:var(--text-main);">Yönetici Girişi</h2>
+            <p style="margin-bottom:2rem; color:var(--text-muted); font-size:0.9rem;">Devam etmek için lütfen kimliğinizi doğrulayın.</p>
             
-            <div class="nav-label" style="margin-top: 2rem;">RAPORLAR</div>
-            <a class="nav-item" onclick="exportData()"><i data-lucide="download"></i>Excel / CSV İndir</a>
-            <a class="nav-item"><i data-lucide="settings"></i>Ayarlar</a>
-        </nav>
-
-        <div class="user-profile">
-            <div class="avatar">AD</div>
-            <div style="flex:1">
-                <div style="font-weight:700; font-size:0.9rem;">Admin</div>
-                <div style="font-size:0.75rem; color:var(--text-muted)">Yönetici</div>
-            </div>
-            <i data-lucide="log-out" style="cursor:pointer; color:var(--danger)" onclick="logout()"></i>
-        </div>
-    </aside>
-
-    <main class="main">
-        <header class="header">
-            <div style="display:flex; align-items:center; gap:1rem;">
-                <button class="btn-icon" id="menuToggle" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none;"><i data-lucide="menu"></i></button>
-                <div class="search-wrap">
-                    <i data-lucide="search"></i>
-                    <input type="text" class="search-input" id="globalSearch" placeholder="Katılımcı, email veya etkinlik ara..." onkeyup="handleGlobalSearch(this.value)">
-                </div>
-            </div>
-            <div class="header-actions">
-                <button class="btn-icon"><i data-lucide="bell"></i><div class="notify-dot"></div></button>
-                <button class="btn btn-primary" onclick="loadAllData()"><i data-lucide="refresh-cw"></i> Yenile</button>
-            </div>
-        </header>
-
-        <div class="content" id="mainContent">
-            
-            <div id="view-dashboard" class="view-section">
-                <div class="section-header">
-                    <div>
-                        <h1 class="page-title">Genel Bakış</h1>
-                        <p class="page-desc">Etkinliklerinizin performansını ve büyüme rakamlarını takip edin.</p>
-                    </div>
-                    <div class="filter-bar" style="margin:0; padding: 0.5rem;">
-                        <select id="timeFilter" class="select-input" onchange="applyFilters()">
-                            <option value="all">Tüm Zamanlar</option>
-                            <option value="30">Son 30 Gün</option>
-                            <option value="7">Son 7 Gün</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon blue"><i data-lucide="users"></i></div>
-                        <div class="kpi-label">TOPLAM KAYIT</div>
-                        <div class="kpi-value" id="kpiTotal">0</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon green"><i data-lucide="user-check"></i></div>
-                        <div class="kpi-label">TEKİL KATILIMCI</div>
-                        <div class="kpi-value" id="kpiUnique">0</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon purple"><i data-lucide="calendar-check"></i></div>
-                        <div class="kpi-label">AKTİF ETKİNLİK</div>
-                        <div class="kpi-value" id="kpiActive">0</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#fff7ed; color:#f97316"><i data-lucide="trending-up"></i></div>
-                        <div class="kpi-label">ORTALAMA KATILIM</div>
-                        <div class="kpi-value" id="kpiAvg">0</div>
-                    </div>
-                </div>
-
-                <div class="charts-wrapper">
-                    <div class="chart-card">
-                        <h3 style="margin-bottom:1.5rem; font-weight:700;">Günlük Kayıt Trendi</h3>
-                        <canvas id="trendChart" height="250"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h3 style="margin-bottom:1.5rem; font-weight:700;">Etkinlik Dağılımı</h3>
-                        <canvas id="pieChart" height="250"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div id="view-crm" class="view-section" style="display:none;">
-                <div class="section-header">
-                    <div>
-                        <h1 class="page-title">CRM & Katılımcılar</h1>
-                        <p class="page-desc">Sadakat analizi ve katılımcı geçmişi.</p>
-                    </div>
-                    <button class="btn btn-outline" onclick="exportData()"><i data-lucide="download"></i> Listeyi İndir</button>
-                </div>
-                
-                <div class="filter-bar">
-                    <input type="text" id="crmSearch" placeholder="İsim veya Email ile filtrele..." class="search-input" style="width:300px;" onkeyup="filterCRM(this.value)">
-                    <select id="eventFilter" class="select-input" onchange="filterCRM()">
-                        <option value="all">Tüm Etkinlikler</option>
-                    </select>
-                </div>
-
-                <div class="crm-grid" id="crmGrid">
-                    </div>
-            </div>
-
-            <div id="view-events" class="view-section" style="display:none;">
-                <div class="section-header">
-                    <div>
-                        <h1 class="page-title">Etkinlik Yönetimi</h1>
-                        <p class="page-desc">Sistemdeki tüm etkinliklerin listesi ve durumu.</p>
-                    </div>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Etkinlik Adı</th>
-                                <th>Durum</th>
-                                <th>Oluşturulma Tarihi</th>
-                                <th>Toplam Kayıt</th>
-                                <th>İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody id="eventsTableBody">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </div>
-    </main>
-</div>
-
-<div class="modal-overlay" id="detailModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h2 id="modalTitle" style="font-size:1.25rem; font-weight:700;">Katılımcı Detayı</h2>
-            <button onclick="closeModal()" style="background:none; border:none; cursor:pointer;"><i data-lucide="x"></i></button>
-        </div>
-        <div class="modal-body" id="modalContent">
-            </div>
-        <div style="padding:1.5rem; background:var(--bg); border-top:1px solid var(--border); text-align:right;">
-            <button class="btn btn-primary" onclick="closeModal()">Kapat</button>
+            <form onsubmit="handleLogin(event)">
+                <input type="email" id="loginEmail" class="login-input" placeholder="E-posta Adresi" required>
+                <input type="password" id="loginPassword" class="login-input" placeholder="Şifre" required>
+                <button type="submit" class="login-btn">Giriş Yap</button>
+            </form>
+            <div id="loginError" style="color:var(--danger); margin-top:1rem; font-size:0.9rem; display:none;"></div>
         </div>
     </div>
-</div>
+
+    <div id="dashboardSection">
+        <div class="app-container">
+            <aside class="sidebar">
+                <div class="brand">
+                    <div class="brand-icon"><i data-lucide="cloud"></i></div>
+                    <div class="brand-text"><h1>EventHub</h1></div>
+                </div>
+                <nav class="nav">
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); padding-left:1rem; margin-bottom:0.5rem;">MENÜ</div>
+                    <a class="nav-item active" onclick="switchView('dashboard')"><i data-lucide="layout-dashboard"></i>Dashboard</a>
+                    <a class="nav-item" onclick="switchView('crm')"><i data-lucide="users"></i>CRM / Kişiler <span class="nav-badge" id="crmCountBadge">0</span></a>
+                    <a class="nav-item" onclick="switchView('events')"><i data-lucide="calendar"></i>Etkinlikler</a>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); padding-left:1rem; margin-top:1.5rem; margin-bottom:0.5rem;">VERİ</div>
+                    <a class="nav-item" onclick="exportData()"><i data-lucide="download"></i>Excel İndir (Filtreli)</a>
+                </nav>
+                <div class="user-profile">
+                    <div class="avatar" id="userAvatar">A</div>
+                    <div style="flex:1">
+                        <div style="font-weight:700; font-size:0.9rem;" id="userEmailDisplay">Admin</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted)">Yönetici</div>
+                    </div>
+                    <i data-lucide="log-out" style="cursor:pointer; color:var(--danger)" onclick="handleLogout()"></i>
+                </div>
+            </aside>
+
+            <main class="main">
+                <header class="header">
+                    <div class="search-wrap">
+                        <i data-lucide="search"></i>
+                        <input type="text" class="search-input" id="globalSearch" placeholder="Genel arama..." onkeyup="handleGlobalSearch(this.value)">
+                    </div>
+                    <button class="btn btn-primary" onclick="loadAllData()"><i data-lucide="refresh-cw"></i> Verileri Yenile</button>
+                </header>
+
+                <div class="content" id="mainContent">
+                    <div id="view-dashboard" class="view-section">
+                        <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:2rem;">
+                            <div>
+                                <h1 style="font-size:1.8rem; font-weight:800;">Genel Bakış</h1>
+                                <p style="color:var(--text-muted);">Platform performans metrikleri.</p>
+                            </div>
+                            <select id="timeFilter" style="padding:0.6rem; border-radius:10px; border:1px solid var(--border);" onchange="applyFilters()">
+                                <option value="all">Tüm Zamanlar</option>
+                                <option value="30">Son 30 Gün</option>
+                                <option value="7">Son 7 Gün</option>
+                            </select>
+                        </div>
+
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div style="color:var(--text-muted); font-size:0.9rem; font-weight:600;">TOPLAM KAYIT</div>
+                                <div class="kpi-value" id="kpiTotal">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div style="color:var(--text-muted); font-size:0.9rem; font-weight:600;">TEKİL KATILIMCI</div>
+                                <div class="kpi-value" id="kpiUnique">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div style="color:var(--text-muted); font-size:0.9rem; font-weight:600;">AKTİF ETKİNLİK</div>
+                                <div class="kpi-value" id="kpiActive">0</div>
+                            </div>
+                        </div>
+
+                        <div class="charts-wrapper">
+                            <div class="chart-card">
+                                <h3>Trend Analizi</h3>
+                                <canvas id="trendChart" height="250"></canvas>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Etkinlik Dağılımı</h3>
+                                <canvas id="pieChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="view-crm" class="view-section" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2rem;">
+                            <h1>CRM & Katılımcılar</h1>
+                            <div style="display:flex; gap:10px;">
+                                <input type="text" id="crmSearch" placeholder="Kişi ara..." style="padding:0.6rem; border:1px solid var(--border); border-radius:8px;" onkeyup="filterCRM(this.value)">
+                                <select id="eventFilter" style="padding:0.6rem; border:1px solid var(--border); border-radius:8px;" onchange="filterCRM()">
+                                    <option value="all">Tüm Etkinlikler</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="crm-grid" id="crmGrid"></div>
+                    </div>
+
+                    <div id="view-events" class="view-section" style="display:none;">
+                        <h1 style="margin-bottom:2rem;">Etkinlik Listesi</h1>
+                        <div class="table-wrap">
+                            <table>
+                                <thead><tr><th>Etkinlik Adı</th><th>Durum</th><th>Tarih</th><th>Kayıt Sayısı</th></tr></thead>
+                                <tbody id="eventsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal">
+            <div style="padding:1.5rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+                <h2 id="modalTitle">Detay</h2>
+                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer;"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" id="modalContent"></div>
+        </div>
+    </div>
 
 <script>
-    // --- 1. YAPILANDIRMA ---
+    // --- KONFİGÜRASYON ---
     const SUPABASE_URL = 'https://iqrmitiszsyewgcsvuvs.supabase.co'; // Senin URL
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc'; // Senin Key'in
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc'; // Senin ANON KEY
+    
+    // Güvenli başlatma
+    let sb;
+    try {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) { console.error("Supabase Yüklenemedi"); }
 
     // Global State
     let state = { events: [], attendances: [], filtered: [], charts: {} };
 
-    // --- 2. BAŞLATMA ---
+    // --- BAŞLATMA & OTURUM KONTROLÜ ---
     window.onload = async () => {
         lucide.createIcons();
         dayjs.locale('tr');
-        showLoader(true);
-        await loadAllData();
         
-        // Mobil menü kontrolü
-        if(window.innerWidth < 768) document.getElementById('menuToggle').style.display = 'flex';
+        // Oturum kontrolü
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+            initDashboard(session);
+        } else {
+            document.getElementById('loadingBar').style.width = '0%';
+        }
     };
 
-    // --- 3. VERİ ÇEKME MOTORU ---
+    // --- GİRİŞ İŞLEMLERİ ---
+    async function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errDiv = document.getElementById('loginError');
+        
+        showLoader(true);
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        
+        if (error) {
+            errDiv.style.display = 'block';
+            errDiv.innerText = "Giriş başarısız: " + error.message;
+            showLoader(false);
+        } else {
+            initDashboard(data.session);
+        }
+    }
+
+    async function handleLogout() {
+        if(confirm("Çıkış yapmak istiyor musunuz?")) {
+            await sb.auth.signOut();
+            window.location.reload();
+        }
+    }
+
+    function initDashboard(session) {
+        // UI Geçişi
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('dashboardSection').style.display = 'block';
+        
+        // Profil Bilgisi
+        const email = session.user.email;
+        document.getElementById('userEmailDisplay').innerText = email.split('@')[0];
+        document.getElementById('userAvatar').innerText = email.charAt(0).toUpperCase();
+        
+        console.log("Admin Logged In:", session.user.id);
+        
+        // Verileri Çek
+        loadAllData();
+    }
+
+    // --- VERİ ÇEKME ---
     async function loadAllData() {
         showLoader(true);
         try {
@@ -337,13 +339,15 @@
             state.attendances = attRes.data || [];
             state.filtered = [...state.attendances];
 
-            // UI Güncellemeleri
-            populateEventFilters();
-            calculateKPIs();
-            renderCharts();
+            // UI Doldur
+            const select = document.getElementById('eventFilter');
+            select.innerHTML = '<option value="all">Tüm Etkinlikler</option>';
+            state.events.forEach(e => select.innerHTML += `<option value="${e.id}">${e.title}</option>`);
+
+            applyFilters(); // KPI ve Grafikleri Hesapla
             renderCRM();
             renderEventsTable();
-            showToast("Veriler başarıyla güncellendi", "success");
+            showToast("Veriler güncellendi");
 
         } catch (err) {
             console.error(err);
@@ -352,224 +356,178 @@
         showLoader(false);
     }
 
-    // --- 4. GÖRÜNÜM & NAVİGASYON ---
-    function switchView(viewName) {
-        // Menü Aktifliği
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        // Sayfa Değişimi
-        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
-        document.getElementById(`view-${viewName}`).style.display = 'block';
+    // --- FİLTRELEME & ANALİZ ---
+    function applyFilters() {
+        const days = document.getElementById('timeFilter').value;
+        if(days === 'all') {
+            state.filtered = state.attendances;
+        } else {
+            const limit = dayjs().subtract(parseInt(days), 'day');
+            state.filtered = state.attendances.filter(a => dayjs(a.created_at).isAfter(limit));
+        }
         
-        // Eğer mobildeysek menüyü kapat
-        if(window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
-    }
-
-    // --- 5. DASHBOARD & KPI MANTIĞI ---
-    function calculateKPIs() {
+        // KPI Güncelle
         const data = state.filtered;
-        
-        // KPI: Toplam
         document.getElementById('kpiTotal').innerText = data.length;
-        
-        // KPI: Tekil
-        const uniqueSet = new Set(data.map(a => a.email));
-        document.getElementById('kpiUnique').innerText = uniqueSet.size;
-        document.getElementById('crmCountBadge').innerText = uniqueSet.size;
+        const unique = new Set(data.map(a => a.email));
+        document.getElementById('kpiUnique').innerText = unique.size;
+        document.getElementById('crmCountBadge').innerText = unique.size;
+        document.getElementById('kpiActive').innerText = state.events.filter(e => e.is_active).length;
 
-        // KPI: Aktif Etkinlik
-        const activeCount = state.events.filter(e => e.is_active).length;
-        document.getElementById('kpiActive').innerText = activeCount;
-
-        // KPI: Ortalama
-        const avg = state.events.length > 0 ? (data.length / state.events.length).toFixed(1) : 0;
-        document.getElementById('kpiAvg').innerText = avg;
+        renderCharts();
     }
 
-    // --- 6. CRM MOTORU (Gelişmiş) ---
-    function renderCRM(filterText = "", filterEventId = "all") {
+    // --- CRM SİSTEMİ ---
+    function renderCRM(searchText = "", filterEventId = "all") {
         const grid = document.getElementById('crmGrid');
         grid.innerHTML = "";
 
-        // Veriyi Grupla
+        // Gruplama
         const people = state.attendances.reduce((acc, curr) => {
-            if(!curr.email) return acc;
-            if(!acc[curr.email]) {
-                acc[curr.email] = { 
-                    name: curr.full_name || 'İsimsiz', 
-                    email: curr.email, 
-                    phone: curr.phone || '-', 
-                    lastSeen: curr.created_at,
-                    history: [] 
-                };
-            }
+            if(!acc[curr.email]) acc[curr.email] = { name: curr.full_name, email: curr.email, phone: curr.phone, history: [] };
             acc[curr.email].history.push(curr);
-            // Son görülme tarihini güncelle
-            if(new Date(curr.created_at) > new Date(acc[curr.email].lastSeen)) {
-                acc[curr.email].lastSeen = curr.created_at;
-            }
             return acc;
         }, {});
 
         // Filtreleme
         let list = Object.values(people);
-        if(filterText) {
-            const lower = filterText.toLowerCase();
-            list = list.filter(p => p.name.toLowerCase().includes(lower) || p.email.toLowerCase().includes(lower));
-        }
-        if(filterEventId !== "all") {
-            list = list.filter(p => p.history.some(h => h.event_id === filterEventId));
-        }
+        if(searchText) list = list.filter(p => p.name.toLowerCase().includes(searchText.toLowerCase()));
+        if(filterEventId !== "all") list = list.filter(p => p.history.some(h => h.event_id === filterEventId));
 
-        // Kartları Oluştur
+        // Kart Oluşturma
         list.forEach(p => {
-            const attendanceCount = p.history.length;
-            const isVip = attendanceCount >= 3; // 3+ katılım VIP sayılır
-            const initials = p.name.substring(0,2).toUpperCase();
-            
+            const isVip = p.history.length >= 3;
             const card = document.createElement('div');
             card.className = 'person-card';
             card.onclick = () => showDetail(p);
-            
             card.innerHTML = `
                 ${isVip ? '<div class="vip-tag">VIP</div>' : ''}
-                <div class="person-header">
-                    <div class="avatar">${initials}</div>
-                    <div style="overflow:hidden;">
-                        <div class="person-name text-truncate">${p.name}</div>
-                        <div class="person-mail text-truncate">${p.email}</div>
-                    </div>
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                    <div style="width:50px; height:50px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.2rem;">${p.name.substring(0,1).toUpperCase()}</div>
+                    <div><div style="font-weight:700;">${p.name}</div><div style="font-size:0.8rem; color:var(--text-muted);">${p.email}</div></div>
                 </div>
-                <div class="person-stats">
-                    <div class="p-stat">
-                        <span class="p-val">${attendanceCount}</span>
-                        <span class="p-lbl">Etkinlik</span>
-                    </div>
-                    <div class="p-stat">
-                        <span class="p-val" style="color:var(--text-main); font-weight:600; font-size:0.9rem;">
-                            ${dayjs(p.lastSeen).format('DD MMM')}
-                        </span>
-                        <span class="p-lbl">Son Görülme</span>
-                    </div>
+                <div style="border-top:1px solid var(--border); padding-top:10px; display:flex; justify-content:space-between;">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">Toplam Katılım</span>
+                    <span style="font-weight:800; color:var(--primary);">${p.history.length}</span>
                 </div>
             `;
             grid.appendChild(card);
         });
     }
 
-    // --- 7. TABLO YÖNETİMİ (Events) ---
+    function filterCRM(val) {
+        const txt = val || document.getElementById('crmSearch').value;
+        const ev = document.getElementById('eventFilter').value;
+        renderCRM(txt, ev);
+    }
+
+    // --- ETKİNLİK TABLOSU ---
     function renderEventsTable() {
         const tbody = document.getElementById('eventsTableBody');
         tbody.innerHTML = state.events.map(ev => {
             const count = state.attendances.filter(a => a.event_id === ev.id).length;
-            const statusClass = ev.is_active ? 'status-active' : 'status-passive';
-            const statusText = ev.is_active ? 'Aktif' : 'Pasif';
-            
+            const statusBadge = ev.is_active ? 
+                '<span class="status-badge active-badge">Aktif</span>' : 
+                '<span class="status-badge passive-badge">Pasif</span>';
             return `
                 <tr>
                     <td style="font-weight:600;">${ev.title}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${dayjs(ev.created_at).format('DD MMMM YYYY')}</td>
-                    <td><b>${count}</b> Kayıt</td>
-                    <td>
-                        <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="filterEventsById('${ev.id}')">Detay</button>
-                    </td>
+                    <td>${statusBadge}</td>
+                    <td>${dayjs(ev.created_at).format('DD.MM.YYYY')}</td>
+                    <td><b>${count}</b></td>
                 </tr>
             `;
         }).join('');
     }
 
-    // --- 8. GRAFİKLER ---
+    // --- GRAFİKLER ---
     function renderCharts() {
-        // Trend Chart (Line)
-        const dateCounts = {};
+        // Trend
+        const dateMap = {};
         state.filtered.forEach(a => {
-            const date = dayjs(a.created_at).format('DD MMM');
-            dateCounts[date] = (dateCounts[date] || 0) + 1;
+            const d = dayjs(a.created_at).format('DD MMM');
+            dateMap[d] = (dateMap[d] || 0) + 1;
         });
-        
-        // Son 14 gün için sırala
-        const labels = Object.keys(dateCounts).slice(-14);
-        const data = Object.values(dateCounts).slice(-14);
+        const labels = Object.keys(dateMap).slice(-14);
+        const data = Object.values(dateMap).slice(-14);
 
         if(state.charts.trend) state.charts.trend.destroy();
         state.charts.trend = new Chart(document.getElementById('trendChart'), {
             type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Günlük Kayıt',
-                    data: data,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
+            data: { labels, datasets: [{ label: 'Kayıt', data, borderColor: '#2563eb', backgroundColor:'rgba(37,99,235,0.1)', fill:true, tension:0.4 }] },
             options: { responsive: true, plugins: { legend: {display:false} } }
         });
 
-        // Pie Chart (Etkinlik Dağılımı)
-        const eventCounts = {};
+        // Pie
+        const evMap = {};
         state.filtered.forEach(a => {
-            const title = a.events?.title || 'Bilinmiyor';
-            eventCounts[title] = (eventCounts[title] || 0) + 1;
+            const t = a.events?.title || 'Bilinmiyor';
+            evMap[t] = (evMap[t] || 0) + 1;
         });
-
         if(state.charts.pie) state.charts.pie.destroy();
         state.charts.pie = new Chart(document.getElementById('pieChart'), {
             type: 'doughnut',
-            data: {
-                labels: Object.keys(eventCounts).slice(0, 5), // İlk 5 etkinlik
-                datasets: [{
-                    data: Object.values(eventCounts).slice(0, 5),
-                    backgroundColor: ['#2563eb', '#8b5cf6', '#22c55e', '#f59e0b', '#ef4444']
-                }]
-            },
-            options: { responsive: true, cutout: '70%', plugins: { legend: {position:'bottom'} } }
+            data: { labels: Object.keys(evMap).slice(0,5), datasets: [{ data: Object.values(evMap).slice(0,5), backgroundColor: ['#2563eb','#8b5cf6','#22c55e','#f59e0b','#ef4444'] }] },
+            options: { responsive: true, cutout:'70%', plugins: { legend: {position:'bottom'} } }
         });
     }
 
-    // --- 9. MODAL & DETAY ---
+    // --- YARDIMCILAR & EXPORT ---
+    function exportData() {
+        // Sadece filtrelenmiş veriyi al (state.filtered)
+        const data = state.filtered;
+        if (!data || data.length === 0) { showToast("İndirilecek veri yok", "error"); return; }
+
+        const headers = ["Ad Soyad", "Email", "Telefon", "Etkinlik", "Tarih"];
+        const rows = data.map(item => [
+            `"${item.full_name || ''}"`,
+            `"${item.email || ''}"`,
+            `"${item.phone || ''}"`,
+            `"${item.events?.title || 'Bilinmiyor'}"`,
+            `"${dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}"`
+        ]);
+
+        const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+        const link = document.createElement("a");
+        link.href = encodeURI(csvContent);
+        link.download = `Rapor_${dayjs().format('YYYY-MM-DD_HHmm')}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Rapor indirildi");
+    }
+
     function showDetail(person) {
         document.getElementById('modalTitle').innerText = person.name;
-        const container = document.getElementById('modalContent');
-        
-        container.innerHTML = `
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid var(--border)">
-                <div><div style="font-size:0.75rem; color:var(--text-muted)">EMAIL</div><div style="font-weight:600">${person.email}</div></div>
-                <div><div style="font-size:0.75rem; color:var(--text-muted)">TELEFON</div><div style="font-weight:600">${person.phone}</div></div>
+        document.getElementById('modalContent').innerHTML = `
+            <div style="margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div><small style="color:gray">EMAIL</small><br><b>${person.email}</b></div>
+                <div><small style="color:gray">TELEFON</small><br><b>${person.phone}</b></div>
             </div>
-            <h4 style="margin-bottom:1rem;">Katılım Zaman Çizelgesi</h4>
-            <div>
+            <h4>Katılım Geçmişi</h4>
+            <div style="margin-top:10px; border-left:2px solid var(--border); padding-left:15px;">
                 ${person.history.map(h => `
-                    <div class="timeline-item">
-                        <div class="timeline-date">${dayjs(h.created_at).format('DD MMMM YYYY, HH:mm')}</div>
-                        <div class="timeline-title">${h.events?.title || 'Bilinmeyen Etkinlik'}</div>
+                    <div style="margin-bottom:10px; position:relative;">
+                        <div style="position:absolute; left:-20px; top:5px; width:8px; height:8px; border-radius:50%; background:var(--primary);"></div>
+                        <div style="font-weight:600;">${h.events?.title || '-'}</div>
+                        <div style="font-size:0.8rem; color:gray;">${dayjs(h.created_at).format('DD MMMM YYYY HH:mm')}</div>
                     </div>
                 `).join('')}
             </div>
         `;
-        
         document.getElementById('detailModal').style.display = 'flex';
     }
 
-    function closeModal() {
-        document.getElementById('detailModal').style.display = 'none';
-    }
-
-    // --- 10. YARDIMCI FONKSİYONLAR ---
-    function populateEventFilters() {
-        const select = document.getElementById('eventFilter');
-        select.innerHTML = '<option value="all">Tüm Etkinlikler</option>';
-        state.events.forEach(e => {
-            select.innerHTML += `<option value="${e.id}">${e.title}</option>`;
-        });
+    function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+    
+    function switchView(view) {
+        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+        document.getElementById('view-'+view).style.display = 'block';
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        event.currentTarget.classList.add('active');
     }
 
     function handleGlobalSearch(val) {
-        // Basit global arama mantığı: CRM sayfasına yönlendirip filtrele
         if(val.length > 2) {
             switchView('crm');
             document.getElementById('crmSearch').value = val;
@@ -577,68 +535,15 @@
         }
     }
 
-    function filterCRM(val) {
-        const eventId = document.getElementById('eventFilter').value;
-        const text = val || document.getElementById('crmSearch').value;
-        renderCRM(text, eventId);
-    }
+    function showLoader(show) { document.getElementById('loadingBar').style.width = show ? '100%' : '0%'; }
     
-    function filterEventsById(id) {
-        switchView('crm');
-        document.getElementById('eventFilter').value = id;
-        renderCRM("", id);
-    }
-
-    function applyFilters() {
-        const days = document.getElementById('timeFilter').value;
-        if(days === 'all') {
-            state.filtered = state.attendances;
-        } else {
-            const dateLimit = dayjs().subtract(parseInt(days), 'day');
-            state.filtered = state.attendances.filter(a => dayjs(a.created_at).isAfter(dateLimit));
-        }
-        calculateKPIs();
-        renderCharts();
-    }
-
-    function exportData() {
-        const rows = [
-            ["Ad Soyad", "Email", "Telefon", "Etkinlik", "Tarih"],
-            ...state.filtered.map(a => [
-                a.full_name, a.email, a.phone, a.events?.title, dayjs(a.created_at).format('YYYY-MM-DD HH:mm')
-            ])
-        ];
-        
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-            + rows.map(e => e.map(i => `"${i || ''}"`).join(",")).join("\n");
-            
-        const link = document.createElement("a");
-        link.href = encodeURI(csvContent);
-        link.download = "EventHub_Export.csv";
-        document.body.appendChild(link);
-        link.click();
-        showToast("Excel dosyası indirildi", "success");
-    }
-
-    function showLoader(show) {
-        const bar = document.getElementById('loadingBar');
-        bar.style.width = show ? '100%' : '0%';
-        if(!show) setTimeout(() => { bar.style.width = '0%'; }, 300);
-    }
-
-    function showToast(msg, type) {
+    function showToast(msg, type='success') {
         const t = document.getElementById('toast');
-        document.getElementById('toastMsg').innerText = msg;
-        t.style.borderLeftColor = type === 'error' ? 'var(--danger)' : 'var(--success)';
-        t.querySelector('i').style.color = type === 'error' ? 'var(--danger)' : 'var(--success)';
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3000);
-    }
-    
-    function logout() {
-        if(confirm('Çıkış yapmak istediğinize emin misiniz?')) {
-            window.location.reload();
-        }
+        t.innerHTML = type === 'error' ? `<i data-lucide="alert-circle" style="color:var(--danger)"></i> ${msg}` : `<i data-lucide="check-circle" style="color:var(--success)"></i> ${msg}`;
+        t.style.display = 'flex';
+        t.style.animation = 'slideInRight 0.3s forwards';
+        setTimeout(() => { t.style.display = 'none'; }, 3000);
+        lucide.createIcons();
     }
 </script>
 </body>
