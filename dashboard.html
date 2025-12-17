@@ -4,8 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EventHub Pro | Yönetim Paneli</title>
+    <link rel="icon" href="data:,">
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/locale/tr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
+        /* --- TEMEL CSS --- */
         :root {
             --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #eff6ff;
             --secondary: #64748b; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
@@ -40,37 +50,51 @@
         .content { padding: 2rem; overflow-y: auto; height: calc(100vh - 70px); }
 
         /* COMPONENTS */
-        .btn { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 5px; transition: var(--transition); }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 5px; transition: var(--transition); font-size: 0.85rem; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
         .btn-success { background: var(--success); color: white; }
+        .btn-purple { background: var(--purple); color: white; }
         
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .kpi-card { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); }
         .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 5px; }
 
+        /* Yeni Dashboard Grid */
         .charts-wrapper { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-        .chart-card { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); }
+        .chart-card { background: white; padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
 
         .crm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
         .person-card { background: white; border-radius: 16px; border: 1px solid var(--border); padding: 1.5rem; cursor: pointer; position: relative; transition: var(--transition); }
         .person-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
         .vip-tag { position: absolute; top: 1rem; right: 1rem; background: #fffbeb; color: #b45309; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; border: 1px solid #fcd34d; }
 
-        .table-wrap { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .table-wrap { background: white; border-radius: 16px; border: 1px solid var(--border); overflow: hidden; width: 100%; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
         th { background: var(--bg); font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+        
+        /* Progress Bar for Table */
+        .progress-bg { width: 60px; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; }
 
         /* MODALS */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; }
         .modal { background: var(--surface); width: 90%; max-width: 600px; border-radius: 16px; max-height: 85vh; display: flex; flex-direction: column; }
         .modal-body { padding: 1.5rem; overflow-y: auto; }
         
-        /* EXPORT MODAL SPECIFIC */
+        /* EXPORT MODAL */
         .export-option { margin-bottom: 1rem; }
         .export-label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); }
         .export-select { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+
+        /* CERTIFICATE HIDDEN TEMPLATE */
+        #certTemplate {
+            width: 800px; height: 600px; background: #fff; position: fixed; top: -9999px; left: -9999px;
+            padding: 40px; border: 10px solid var(--primary); display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; text-align: center; color: var(--text-main);
+            background-image: radial-gradient(#f1f5f9 2px, transparent 2px); background-size: 30px 30px;
+        }
 
         /* UTILS */
         #loadingBar { position: fixed; top: 0; left: 0; height: 3px; background: var(--primary); width: 0%; z-index: 6000; transition: width 0.3s; }
@@ -83,6 +107,27 @@
 
     <div id="loadingBar"></div>
     <div id="toast" class="toast"><span>İşlem başarılı</span></div>
+
+    <div id="certTemplate">
+        <div style="font-size: 40px; font-weight: 800; color: var(--primary); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px;">KATILIM SERTİFİKASI</div>
+        <div style="font-size: 18px; color: var(--text-muted); margin-bottom: 40px;">Bu belge, aşağıda ismi bulunan katılımcının etkinliğimizi başarıyla tamamladığını onaylar.</div>
+        
+        <div id="certName" style="font-size: 50px; font-weight: 900; color: #000; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; width: 80%;"></div>
+        
+        <div style="font-size: 24px; color: var(--text-muted); margin-top: 30px;">Katılımcı Olarak</div>
+        <div id="certEvent" style="font-size: 32px; font-weight: 700; color: var(--primary); margin-top: 10px;"></div>
+        
+        <div style="margin-top: 60px; display: flex; justify-content: space-between; width: 80%;">
+            <div style="text-align: center;">
+                <div id="certDate" style="font-size: 18px; font-weight: 600;"></div>
+                <div style="border-top: 1px solid #ccc; width: 150px; margin-top: 5px; padding-top: 5px; font-size: 14px; color: var(--text-muted);">Tarih</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 18px; font-weight: 600; font-family: cursive;">EventHub</div>
+                <div style="border-top: 1px solid #ccc; width: 150px; margin-top: 5px; padding-top: 5px; font-size: 14px; color: var(--text-muted);">Organizasyon</div>
+            </div>
+        </div>
+    </div>
 
     <div id="loginSection">
         <div class="login-card">
@@ -138,13 +183,29 @@
                                 <div class="kpi-value" id="kpiActive">0</div>
                             </div>
                         </div>
+                        
                         <div class="charts-wrapper">
-                            <div class="chart-card">
-                                <h3>Trend Analizi</h3>
-                                <canvas id="trendChart"></canvas>
+                            <div class="chart-card" style="padding:0; overflow:hidden;">
+                                <div style="padding:1.5rem; border-bottom:1px solid var(--border);">
+                                    <h3 style="margin:0; font-size:1.1rem;">Son Etkinlik Durumları</h3>
+                                </div>
+                                <div class="table-wrap" style="border:none; box-shadow:none; border-radius:0;">
+                                    <table style="width:100%;">
+                                        <thead style="background:var(--bg);">
+                                            <tr>
+                                                <th style="padding-left:1.5rem;">ETKİNLİK</th>
+                                                <th>TARİH</th>
+                                                <th>KAYIT</th>
+                                                <th>DURUM</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentEventsBody"></tbody>
+                                    </table>
+                                </div>
                             </div>
+                            
                             <div class="chart-card">
-                                <h3>Etkinlik Dağılımı</h3>
+                                <h3>Kategori Dağılımı</h3>
                                 <canvas id="pieChart"></canvas>
                             </div>
                         </div>
@@ -212,24 +273,35 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
-    
     <script>
         // --- AYARLAR ---
-        const SUPABASE_URL = 'https://iqrmitiszsyewgcsvuvs.supabase.co'; // Doldur
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc'; // Doldur
+        const SUPABASE_URL = 'https://iqrmitiszsyewgcsvuvs.supabase.co'; // Burayı doldur
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc'; // Burayı doldur
         
+        // Supabase'i Güvenli Başlat
         let sb;
-        try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) { console.error("Supabase hatası"); }
+        try {
+            if (window.supabase) {
+                sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            } else {
+                console.error("Supabase SDK yüklenemedi.");
+            }
+        } catch(e) { console.error("Supabase Init Error:", e); }
+
         let state = { events: [], attendances: [], charts: {} };
 
         // --- BAŞLATMA ---
         window.onload = async () => {
-            // İkonları güvenli yükle
             if(window.lucide) lucide.createIcons();
+            dayjs.locale('tr');
             
+            // Eğer sb yoksa devam etme
+            if (!sb) {
+                document.getElementById('loadingBar').style.width = '0%';
+                alert("Veritabanı bağlantı hatası. Kütüphaneleri kontrol edin.");
+                return;
+            }
+
             // Oturum Kontrolü
             const { data: { session } } = await sb.auth.getSession();
             if (session) initDashboard(session);
@@ -239,6 +311,7 @@
         // --- AUTH ---
         async function handleLogin(e) {
             e.preventDefault();
+            if (!sb) return;
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             showLoader(true);
@@ -263,7 +336,7 @@
         function initDashboard(session) {
             document.getElementById('loginSection').style.display = 'none';
             document.getElementById('dashboardSection').style.display = 'block';
-            console.log("Admin UUID:", session.user.id);
+            console.log("Logged in:", session.user.email);
             loadAllData();
         }
 
@@ -300,8 +373,48 @@
             document.getElementById('kpiActive').innerText = state.events.filter(e => e.is_active).length;
 
             renderCRM();
-            renderEventsTable();
-            renderCharts();
+            renderRecentEventsTable();
+            renderPieChart();
+        }
+
+        // --- DASHBOARD WIDGETS ---
+        function renderRecentEventsTable() {
+            const tbody = document.getElementById('recentEventsBody');
+            const recent = state.events.slice(0, 5); // İlk 5
+            
+            tbody.innerHTML = recent.map(ev => {
+                const count = state.attendances.filter(a => a.event_id === ev.id).length;
+                const progress = Math.min((count/50)*100, 100);
+                
+                return `
+                    <tr>
+                        <td style="padding-left:1.5rem; font-weight:600;">${ev.title}</td>
+                        <td style="color:var(--text-muted); font-size:0.85rem;">${dayjs(ev.created_at).format('DD MMM')}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-weight:700; font-size:0.85rem;">${count}</span>
+                                <div class="progress-bg"><div class="progress-fill" style="width:${progress}%"></div></div>
+                            </div>
+                        </td>
+                        <td>${ev.is_active ? '<span style="color:var(--success); font-weight:700; font-size:0.75rem;">● Aktif</span>' : '<span style="color:var(--text-muted); font-size:0.75rem;">Kapalı</span>'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderPieChart() {
+            const evMap = {};
+            state.attendances.forEach(a => { const t = a.events?.title || 'Diğer'; evMap[t] = (evMap[t] || 0) + 1; });
+            
+            if(state.charts.pie) state.charts.pie.destroy();
+            const ctx = document.getElementById('pieChart');
+            if(!ctx) return;
+            
+            state.charts.pie = new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: Object.keys(evMap).slice(0,5), datasets: [{ data: Object.values(evMap).slice(0,5), backgroundColor: ['#2563eb','#8b5cf6','#22c55e','#f59e0b','#ef4444'] }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout:'70%', plugins: { legend: {position:'bottom', labels:{boxWidth:10}} } }
+            });
         }
 
         // --- CRM ---
@@ -309,9 +422,8 @@
             const grid = document.getElementById('crmGrid');
             grid.innerHTML = "";
             
-            // Gruplama
             const groups = state.attendances.reduce((acc, curr) => {
-                if(!acc[curr.email]) acc[curr.email] = { name: curr.full_name, email: curr.email, history: [] };
+                if(!acc[curr.email]) acc[curr.email] = { name: curr.full_name, email: curr.email, phone: curr.phone, history: [] };
                 acc[curr.email].history.push(curr);
                 return acc;
             }, {});
@@ -328,8 +440,8 @@
                     ${isVip ? '<div class="vip-tag">VIP</div>' : ''}
                     <div style="display:flex; gap:15px; align-items:center;">
                         <div style="width:45px; height:45px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:1.1rem;">${p.name[0].toUpperCase()}</div>
-                        <div>
-                            <div style="font-weight:700;">${p.name}</div>
+                        <div style="overflow:hidden;">
+                            <div style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
                             <div style="font-size:0.8rem; color:var(--text-muted);">${p.email}</div>
                         </div>
                     </div>
@@ -342,7 +454,7 @@
             });
         }
 
-        // --- TABLO ---
+        // --- EVENTS TABLO ---
         function renderEventsTable() {
             const tbody = document.getElementById('eventsTableBody');
             tbody.innerHTML = state.events.map(ev => {
@@ -356,104 +468,103 @@
             }).join('');
         }
 
-        // --- EXPORT (YENİLENMİŞ) ---
-        function openExportModal() {
-            document.getElementById('exportModal').style.display = 'flex';
-        }
+        // --- EXPORT (FİLTRELİ) ---
+        function openExportModal() { document.getElementById('exportModal').style.display = 'flex'; }
 
         function processExport() {
             const eventId = document.getElementById('exportEventSelect').value;
             const timeRange = document.getElementById('exportTimeSelect').value;
             
-            // Filtreleme Mantığı
             let data = state.attendances;
-
-            // 1. Etkinlik Filtresi
-            if (eventId !== 'all') {
-                data = data.filter(a => a.event_id === eventId);
-            }
-
-            // 2. Zaman Filtresi
+            if (eventId !== 'all') data = data.filter(a => a.event_id === eventId);
             if (timeRange !== 'all') {
                 let limit;
                 const now = dayjs();
                 if(timeRange === '7') limit = now.subtract(7, 'day');
                 if(timeRange === '30') limit = now.subtract(30, 'day');
                 if(timeRange === 'today') limit = now.startOf('day');
-                
                 data = data.filter(a => dayjs(a.created_at).isAfter(limit));
             }
 
-            if(data.length === 0) {
-                showToast("Seçilen kriterlere uygun veri yok!", "error");
-                return;
-            }
+            if(data.length === 0) { showToast("Veri yok!", "error"); return; }
 
-            // İndirme İşlemi
             const headers = ["Ad Soyad", "Email", "Telefon", "Etkinlik", "Tarih"];
-            const rows = data.map(item => [
-                `"${item.full_name || ''}"`,
-                `"${item.email || ''}"`,
-                `"${item.phone || ''}"`,
-                `"${item.events?.title || 'Bilinmiyor'}"`,
-                `"${dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}"`
-            ]);
-
+            const rows = data.map(item => [ `"${item.full_name||''}"`, `"${item.email||''}"`, `"${item.phone||''}"`, `"${item.events?.title||''}"`, `"${dayjs(item.created_at).format('DD.MM.YYYY HH:mm')}"` ]);
             const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
-            const encodedUri = encodeURI(csvContent);
+            
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Rapor_${dayjs().format('YYYY-MM-DD_HHmm')}.csv`);
+            link.href = encodeURI(csvContent);
+            link.download = `Rapor_${dayjs().format('YYYY-MM-DD')}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             
             closeModal('exportModal');
-            showToast(`${data.length} kayıt indirildi.`, "success");
+            showToast(`${data.length} kayıt indirildi.`);
         }
 
-        // --- GRAFİKLER ---
-        function renderCharts() {
-            const dateMap = {};
-            state.attendances.forEach(a => {
-                const d = dayjs(a.created_at).format('DD MMM');
-                dateMap[d] = (dateMap[d] || 0) + 1;
-            });
-            const labels = Object.keys(dateMap).reverse().slice(0, 14).reverse();
-            const data = Object.values(dateMap).reverse().slice(0, 14).reverse();
-
-            if(state.charts.trend) state.charts.trend.destroy();
-            state.charts.trend = new Chart(document.getElementById('trendChart'), {
-                type: 'line',
-                data: { labels, datasets: [{ label: 'Kayıt', data, borderColor: '#2563eb', fill: true, backgroundColor:'rgba(37,99,235,0.1)' }] },
-                options: { responsive: true, plugins: { legend: {display:false} } }
-            });
-
-            // Pie Chart
-            const evMap = {};
-            state.attendances.forEach(a => {
-                const t = a.events?.title || 'Diğer';
-                evMap[t] = (evMap[t] || 0) + 1;
-            });
-            if(state.charts.pie) state.charts.pie.destroy();
-            state.charts.pie = new Chart(document.getElementById('pieChart'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(evMap).slice(0,5), datasets: [{ data: Object.values(evMap).slice(0,5), backgroundColor: ['#2563eb','#8b5cf6','#22c55e','#f59e0b','#ef4444'] }] },
-                options: { responsive: true, plugins: { legend: {position:'bottom'} } }
+        // --- SERTİFİKA (YENİ) ---
+        function downloadCertificate(name, eventTitle, date) {
+            showLoader(true);
+            const template = document.getElementById('certTemplate');
+            
+            // Verileri Doldur
+            document.getElementById('certName').innerText = name;
+            document.getElementById('certEvent').innerText = eventTitle;
+            document.getElementById('certDate').innerText = date;
+            
+            // HTML to Canvas to PDF
+            html2canvas(template, {scale: 2}).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF('l', 'mm', 'a4'); // Landscape, A4
+                const width = pdf.internal.pageSize.getWidth();
+                const height = pdf.internal.pageSize.getHeight();
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+                pdf.save(`Sertifika_${name.replace(/\s+/g, '_')}.pdf`);
+                
+                showLoader(false);
+                showToast("Sertifika oluşturuldu");
             });
         }
 
-        // --- MODAL & YARDIMCILAR ---
+        // --- MODAL & UI ---
         function showDetail(p) {
             document.getElementById('modalTitle').innerText = p.name;
+            const historyHtml = p.history.map(h => {
+                const dateStr = dayjs(h.created_at).format('DD MMMM YYYY');
+                const title = h.events?.title || 'Bilinmiyor';
+                // Sertifika butonu için argümanları hazırla
+                return `
+                    <div style="padding:15px; background:var(--bg); border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="font-weight:700; color:var(--text-main);">${title}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${dateStr}</div>
+                        </div>
+                        <button class="btn btn-purple" onclick="downloadCertificate('${p.name}', '${title}', '${dateStr}')">
+                            <i data-lucide="award"></i> Sertifika
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
             document.getElementById('modalContent').innerHTML = `
-                <div style="margin-bottom:20px;"><b>Email:</b> ${p.email} <br> <b>Telefon:</b> ${p.phone || '-'}</div>
-                <h4>Geçmiş</h4>
-                <div style="margin-top:10px;">
-                    ${p.history.map(h => `<div style="padding:10px; background:var(--bg); border-radius:8px; margin-bottom:5px;"><b>${h.events?.title || '-'}</b> <span style="float:right; font-size:0.8rem; color:gray;">${dayjs(h.created_at).format('DD/MM/YYYY')}</span></div>`).join('')}
+                <div style="margin-bottom:20px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div style="padding:10px; border:1px solid var(--border); border-radius:8px;">
+                        <small style="color:var(--text-muted); font-weight:600;">EMAIL</small>
+                        <div style="font-weight:600;">${p.email}</div>
+                    </div>
+                    <div style="padding:10px; border:1px solid var(--border); border-radius:8px;">
+                        <small style="color:var(--text-muted); font-weight:600;">TELEFON</small>
+                        <div style="font-weight:600;">${p.phone || '-'}</div>
+                    </div>
                 </div>
+                <h4 style="margin-bottom:10px;">Etkinlik Geçmişi</h4>
+                <div>${historyHtml}</div>
             `;
+            
             document.getElementById('detailModal').style.display = 'flex';
+            if(window.lucide) lucide.createIcons();
         }
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -473,12 +584,11 @@
             t.innerHTML = type === 'error' ? `⚠️ ${msg}` : `✅ ${msg}`;
             t.style.display = 'flex';
             t.style.animation = 'none';
-            t.offsetHeight; /* trigger reflow */
+            t.offsetHeight; 
             t.style.animation = 'slideIn 0.3s forwards';
             setTimeout(() => t.style.display = 'none', 3000);
         }
         
-        // CSS Animasyon
         const style = document.createElement('style');
         style.innerHTML = `@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }`;
         document.head.appendChild(style);
