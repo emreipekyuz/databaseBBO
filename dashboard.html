@@ -3,248 +3,2775 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bir Bulut Olsam | Pro CRM Dashboard</title>
+    <title>EventHub Pro - Advanced CRM & Analytics</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase/2.39.0/supabase.min.js"></script>
     <style>
-        /* Modern Apple-Style UI & Bento Grid */
         :root {
-            --primary: #2563eb; --bg: #f8fafc; --surface: #ffffff;
-            --text: #1e293b; --text-muted: #64748b; --border: #e2e8f0;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --purple: #9333ea;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); }
-        .app-container { display: flex; min-height: 100vh; }
 
-        /* Sidebar */
-        .sidebar { width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 2rem 0; position: fixed; height: 100vh; z-index: 100; }
-        .logo { padding: 0 1.5rem 2rem; font-size: 1.5rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
-        .nav-menu { list-style: none; }
-        .nav-item { padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 0.8rem; cursor: pointer; transition: 0.2s; color: var(--text-muted); font-weight: 600; }
-        .nav-item:hover { background: #f1f5f9; color: var(--primary); }
-        .nav-item.active { background: #eff6ff; color: var(--primary); border-right: 4px solid var(--primary); }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Advanced Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border-right: 1px solid var(--border);
+            padding: 0;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-user {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(147, 51, 234, 0.1));
+            margin: 1rem 1rem 0;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .sidebar-user:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 1.5rem 1rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .nav-item {
+            padding: 0.875rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(147, 51, 234, 0.15));
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: linear-gradient(180deg, var(--primary), var(--purple));
+            border-radius: 0 4px 4px 0;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            padding: 0.25rem 0.5rem;
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .nav-badge.success {
+            background: var(--success);
+        }
+
+        .nav-badge.warning {
+            background: var(--warning);
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .sidebar-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .sidebar-stat {
+            padding: 0.75rem;
+            background: var(--background);
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+
+        .sidebar-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .sidebar-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
 
         /* Main Content */
-        .main-content { margin-left: 260px; flex: 1; padding: 2.5rem; width: calc(100% - 260px); }
-        .header { margin-bottom: 2rem; }
-        .header h1 { font-size: 1.8rem; font-weight: 800; }
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            width: calc(100% - 280px);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-        /* Filters */
-        .filter-bar { background: var(--surface); padding: 1.2rem; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; }
-        select { padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: 10px; outline: none; font-size: 0.9rem; }
+        /* Top Bar */
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            box-shadow: var(--shadow-sm);
+        }
 
-        /* KPI & CRM Cards */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .card { background: var(--surface); padding: 1.5rem; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 0.5rem; }
-        
-        .person-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
-        .person-card { background: var(--surface); padding: 1.5rem; border-radius: 16px; border: 2px solid transparent; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .person-card:hover { border-color: var(--primary); transform: translateY(-3px); }
-        .avatar { width: 50px; height: 50px; border-radius: 12px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 1rem; }
+        .search-bar {
+            flex: 1;
+            max-width: 500px;
+            position: relative;
+        }
 
-        /* Modal */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal { background: white; width: 90%; max-width: 600px; border-radius: 20px; padding: 2rem; max-height: 80vh; overflow-y: auto; }
-        .event-tag { display: inline-block; background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; margin: 4px; font-weight: 600; border: 1px solid #e2e8f0; }
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: var(--transition);
+            background: var(--background);
+        }
 
-        .btn { padding: 0.6rem 1.2rem; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; display: flex; align-items: center; gap: 0.5rem; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: #f1f5f9; color: var(--text); }
-        
-        #loadingBar { position: fixed; top: 0; left: 0; right: 0; height: 4px; background: var(--primary); transform: scaleX(0); transform-origin: left; transition: 0.3s; z-index: 2000; }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .icon-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--background);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        .icon-button:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 2rem;
+            flex: 1;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .page-title-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-separator {
+            color: var(--border);
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--primary);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Advanced Filter Bar */
+        .filter-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-label-icon {
+            color: var(--primary);
+        }
+
+        select, input[type="text"], input[type="date"] {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.875rem;
+            background: white;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        select:focus, input[type="text"]:focus, input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .filter-button-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            font-size: 0.875rem;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        /* Advanced KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 1.75rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .kpi-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .kpi-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: inherit;
+            opacity: 0.2;
+        }
+
+        .kpi-icon.blue {
+            background: var(--primary);
+            color: white;
+        }
+
+        .kpi-icon.green {
+            background: var(--success);
+            color: white;
+        }
+
+        .kpi-icon.purple {
+            background: var(--purple);
+            color: white;
+        }
+
+        .kpi-icon.orange {
+            background: var(--warning);
+            color: white;
+        }
+
+        .kpi-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+
+        .kpi-trend.up {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--success);
+        }
+
+        .kpi-trend.down {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-description {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kpi-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-footer-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .kpi-footer-link {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .kpi-footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Chart Sections */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-section {
+            background: white;
+            padding: 1.75rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-option-btn {
+            padding: 0.375rem 0.75rem;
+            border: 1px solid var(--border);
+            background: var(--background);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .chart-option-btn:hover,
+        .chart-option-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* CRM Person Cards */
+        .person-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .person-card {
+            background: white;
+            padding: 1.75rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .person-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(147, 51, 234, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .person-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary);
+        }
+
+        .person-card:hover::before {
+            opacity: 1;
+        }
+
+        .person-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .person-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 700;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .person-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .person-status {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--success);
+            border: 3px solid white;
+        }
+
+        .person-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .person-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .person-email {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+
+        .person-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .person-tag {
+            padding: 0.25rem 0.625rem;
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 600;
+            border-radius: 12px;
+        }
+
+        .person-tag.vip {
+            background: rgba(147, 51, 234, 0.1);
+            color: var(--purple);
+        }
+
+        .person-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .person-card-footer {
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1;
+        }
+
+        .person-last-seen {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .person-action {
+            color: var(--primary);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            cursor: pointer;
+        }
+
+        .person-action:hover {
+            text-decoration: underline;
+        }
+
+        /* Advanced Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            padding: 2rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: var(--shadow-xl);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(147, 51, 234, 0.05));
+        }
+
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .modal-close {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--background);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .modal-close:hover {
+            background: var(--danger);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-section {
+            margin-bottom: 2rem;
+        }
+
+        .modal-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-section-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            padding: 1.5rem;
+            background: var(--background);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        .attendance-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .attendance-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), transparent);
+        }
+
+        .attendance-item {
+            position: relative;
+            padding: 1.25rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .attendance-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+            transform: translateX(4px);
+        }
+
+        .attendance-item::before {
+            content: '';
+            position: absolute;
+            left: -1.625rem;
+            top: 1.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .attendance-event {
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .attendance-date {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .attendance-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .attendance-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        /* Data Table */
+        .table-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--background);
+        }
+
+        th {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.875rem;
+        }
+
+        tr:hover {
+            background: var(--background);
+        }
+
+        .table-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .table-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .table-name-text {
+            font-weight: 600;
+        }
+
+        .table-badge {
+            padding: 0.25rem 0.625rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .table-badge.active {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--success);
+        }
+
+        .table-badge.inactive {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+        }
+
+        /* Loading States */
+        .skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            border-radius: var(--radius-sm);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                background-position: 200% 0;
+            }
+            50% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            height: 180px;
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+
+        .skeleton-text {
+            height: 16px;
+            margin-bottom: 1rem;
+            background: var(--skeleton);
+        }
+
+        .skeleton-text.short {
+            width: 60%;
+        }
+
+        .skeleton-text.medium {
+            width: 80%;
+        }
+
+        .loading-bar {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+            transform: scaleX(0);
+            transform-origin: left;
+            z-index: 200;
+        }
+
+        .loading-bar.active {
+            animation: loadingProgress 1.5s ease-in-out;
+        }
+
+        @keyframes loadingProgress {
+            0% {
+                transform: scaleX(0);
+            }
+            50% {
+                transform: scaleX(0.7);
+            }
+            100% {
+                transform: scaleX(1);
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 150;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1.5rem;
+            opacity: 0.2;
+            color: var(--primary);
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Notification Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .toast {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 300px;
+            border-left: 4px solid var(--primary);
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left-color: var(--success);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--success);
+        }
+
+        .toast.error .toast-icon {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 0.875rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .toast-message {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        /* Analytics Cards */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .analytics-card {
+            background: white;
+            padding: 1.75rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .analytics-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .analytics-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .analytics-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .analytics-change {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .analytics-change.positive {
+            color: var(--success);
+        }
+
+        .analytics-change.negative {
+            color: var(--danger);
+        }
+
+        .mini-chart {
+            margin-top: 1rem;
+            height: 60px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .main-content {
+                margin-left: 80px;
+                width: calc(100% - 80px);
+            }
+
+            .loading-bar, .loading-overlay {
+                left: 80px;
+            }
+
+            .nav-item span,
+            .logo-text,
+            .user-info,
+            .nav-section-title,
+            .sidebar-footer {
+                display: none;
+            }
+
+            .nav-item {
+                justify-content: center;
+            }
+
+            .logo {
+                justify-content: center;
+            }
+
+            .sidebar-user {
+                padding: 1rem;
+                justify-content: center;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .person-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+            }
+
+            .top-bar {
+                padding: 1rem;
+            }
+
+            .search-bar {
+                max-width: 200px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .sidebar,
+            .top-bar,
+            .filter-bar,
+            .modal-overlay {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .kpi-card,
+            .chart-section,
+            .person-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
-    <div id="loadingBar"></div>
+    <!-- Loading Bar -->
+    <div class="loading-bar" id="loadingBar"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
     <div class="app-container">
+        <!-- Sidebar -->
         <aside class="sidebar">
-            <div class="logo"><i data-lucide="cloud"></i> <span>Bir Bulut</span></div>
-            <ul class="nav-menu">
-                <li class="nav-item active" data-view="dashboard"><i data-lucide="pie-chart"></i><span>Dashboard</span></li>
-                <li class="nav-item" data-view="crm"><i data-lucide="contact-2"></i><span>CRM / Katılımcılar</span></li>
-            </ul>
-        </aside>
-
-        <main class="main-content">
-            <div class="header">
-                <h1 id="pageTitle">Dashboard</h1>
-                <p id="pageSubtitle">Genel performans ve katılım verileri</p>
-            </div>
-
-            <div class="filter-bar">
-                <select id="eventFilter"><option value="all">Tüm Etkinlikler</option></select>
-                <select id="dateRangeFilter">
-                    <option value="all">Tüm Zamanlar</option>
-                    <option value="7">Son 7 Gün</option>
-                    <option value="30">Son 30 Gün</option>
-                </select>
-                <button class="btn btn-secondary" id="refreshBtn"><i data-lucide="refresh-cw"></i>Yenile</button>
-                <button class="btn btn-primary" id="exportBtn" style="margin-left:auto;"><i data-lucide="download"></i>CSV İndir</button>
-            </div>
-
-            <div class="kpi-grid">
-                <div class="card"><div class="text-muted">Toplam Katılım</div><div class="kpi-value" id="totalAttendances">0</div></div>
-                <div class="card"><div class="text-muted">Tekil Katılımcı (CRM)</div><div class="kpi-value" id="uniqueParticipants">0</div></div>
-                <div class="card"><div class="text-muted">Aktif Etkinlikler</div><div class="kpi-value" id="activeEvents">0</div></div>
-            </div>
-
-            <div id="dashboardView">
-                <div class="card">
-                    <h3 style="margin-bottom:1rem;">Kayıt Trendi</h3>
-                    <canvas id="trendChart" height="100"></canvas>
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <div>
+                        <div class="logo-text">EventHub</div>
+                        <div class="logo-subtitle">Pro Edition</div>
+                    </div>
                 </div>
             </div>
 
-            <div id="crmView" style="display: none;">
-                <div class="person-grid" id="personGrid"></div>
+            <div class="sidebar-user">
+                <div class="user-avatar">AD</div>
+                <div class="user-info">
+                    <div class="user-name">Admin User</div>
+                    <div class="user-role">Super Admin</div>
+                </div>
+                <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: var(--text-secondary);"></i>
+            </div>
+
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-section">
+                        <div class="nav-section-title">Main Menu</div>
+                        <ul style="list-style: none;">
+                            <li class="nav-item active" data-view="dashboard">
+                                <i data-lucide="home"></i>
+                                <span>Dashboard</span>
+                            </li>
+                            <li class="nav-item" data-view="crm">
+                                <i data-lucide="users"></i>
+                                <span>CRM</span>
+                                <span class="nav-badge" id="crmBadge">0</span>
+                            </li>
+                            <li class="nav-item" data-view="reports">
+                                <i data-lucide="bar-chart-3"></i>
+                                <span>Reports</span>
+                            </li>
+                            <li class="nav-item" data-view="analytics">
+                                <i data-lucide="trending-up"></i>
+                                <span>Analytics</span>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-section">
+                        <div class="nav-section-title">Management</div>
+                        <ul style="list-style: none;">
+                            <li class="nav-item" data-view="events">
+                                <i data-lucide="calendar"></i>
+                                <span>Events</span>
+                                <span class="nav-badge success" id="eventsBadge">0</span>
+                            </li>
+                            <li class="nav-item" data-view="attendances">
+                                <i data-lucide="user-check"></i>
+                                <span>Attendances</span>
+                            </li>
+                            <li class="nav-item" data-view="export">
+                                <i data-lucide="download"></i>
+                                <span>Export Data</span>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-stats">
+                    <div class="sidebar-stat">
+                        <div class="sidebar-stat-value" id="sidebarTotalEvents">0</div>
+                        <div class="sidebar-stat-label">Events</div>
+                    </div>
+                    <div class="sidebar-stat">
+                        <div class="sidebar-stat-value" id="sidebarTotalUsers">0</div>
+                        <div class="sidebar-stat-label">Users</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="search-bar">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input 
+                        type="text" 
+                        class="search-input" 
+                        placeholder="Search participants, events..."
+                        id="globalSearch"
+                    >
+                </div>
+                <div class="top-bar-actions">
+                    <button class="icon-button" id="notificationBtn">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <button class="icon-button" id="settingsBtn">
+                        <i data-lucide="settings"></i>
+                    </button>
+                    <button class="icon-button" id="helpBtn">
+                        <i data-lucide="help-circle"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">Home</span>
+                        <i data-lucide="chevron-right" class="breadcrumb-separator"></i>
+                        <span class="breadcrumb-item active" id="breadcrumbCurrent">Dashboard</span>
+                    </div>
+                    <div class="page-header-top">
+                        <div class="page-title-group">
+                            <h1 class="page-title" id="pageTitle">Dashboard Overview</h1>
+                        </div>
+                        <div class="filter-button-group">
+                            <button class="btn btn-secondary btn-sm" id="refreshAllBtn">
+                                <i data-lucide="refresh-cw"></i>
+                                Refresh
+                            </button>
+                            <button class="btn btn-primary btn-sm" id="newEventBtn">
+                                <i data-lucide="plus"></i>
+                                New Event
+                            </button>
+                        </div>
+                    </div>
+                    <p class="page-subtitle" id="pageSubtitle">Manage and analyze your events and participants</p>
+                </div>
+
+                <!-- Advanced Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-header">
+                        <div class="filter-title">
+                            <i data-lucide="filter"></i>
+                            Advanced Filters
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-sm btn-secondary" id="resetFiltersBtn">
+                                <i data-lucide="x-circle"></i>
+                                Reset
+                            </button>
+                            <button class="btn btn-sm btn-outline" id="saveFiltersBtn">
+                                <i data-lucide="save"></i>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i data-lucide="calendar" class="filter-label-icon"></i>
+                                Event
+                            </label>
+                            <select id="eventFilter">
+                                <option value="all">All Events</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i data-lucide="clock" class="filter-label-icon"></i>
+                                Date Range
+                            </label>
+                            <select id="dateRangeFilter">
+                                <option value="all">All Time</option>
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="365">Last Year</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i data-lucide="activity" class="filter-label-icon"></i>
+                                Status
+                            </label>
+                            <select id="statusFilter">
+                                <option value="all">All Status</option>
+                                <option value="active">Active Only</option>
+                                <option value="inactive">Inactive Only</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i data-lucide="sort-asc" class="filter-label-icon"></i>
+                                Sort By
+                            </label>
+                            <select id="sortFilter">
+                                <option value="date_desc">Date (Newest)</option>
+                                <option value="date_asc">Date (Oldest)</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-button-group">
+                        <button class="btn btn-primary" id="applyFiltersBtn">
+                            <i data-lucide="check"></i>
+                            Apply Filters
+                        </button>
+                        <button class="btn btn-success" id="exportCsvBtn">
+                            <i data-lucide="download"></i>
+                            Export to CSV
+                        </button>
+                        <button class="btn btn-secondary" id="exportExcelBtn">
+                            <i data-lucide="file-spreadsheet"></i>
+                            Export to Excel
+                        </button>
+                        <button class="btn btn-secondary" id="printBtn">
+                            <i data-lucide="printer"></i>
+                            Print Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-title-group">
+                                <div class="kpi-icon blue">
+                                    <i data-lucide="users"></i>
+                                </div>
+                                <div class="kpi-title">Total Attendances</div>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
+                                <span>5%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="avgAttendanceRate">0%</div>
+                        <div class="kpi-description">
+                            <i data-lucide="bar-chart" style="width: 14px; height: 14px;"></i>
+                            Performance metric
+                        </div>
+                        <div class="kpi-footer">
+                            <span class="kpi-footer-text">Industry avg: 65%</span>
+                            <span class="kpi-footer-link">
+                                Analytics
+                                <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Content Views -->
+                <div id="dashboardView">
+                    <div class="chart-grid">
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i data-lucide="trending-up"></i>
+                                    Registration Trends
+                                </div>
+                                <div class="chart-options">
+                                    <button class="chart-option-btn active">Daily</button>
+                                    <button class="chart-option-btn">Weekly</button>
+                                    <button class="chart-option-btn">Monthly</button>
+                                </div>
+                            </div>
+                            <canvas id="trendChart" height="80"></canvas>
+                        </div>
+
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i data-lucide="pie-chart"></i>
+                                    Event Distribution
+                                </div>
+                                <div class="chart-options">
+                                    <button class="chart-option-btn active">Count</button>
+                                    <button class="chart-option-btn">Percentage</button>
+                                </div>
+                            </div>
+                            <canvas id="distributionChart" height="80"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-section" style="margin-bottom: 2rem;">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i data-lucide="bar-chart-2"></i>
+                                Top Performing Events
+                            </div>
+                            <div class="chart-options">
+                                <button class="chart-option-btn active">Attendances</button>
+                                <button class="chart-option-btn">Growth</button>
+                            </div>
+                        </div>
+                        <canvas id="performanceChart" height="60"></canvas>
+                    </div>
+                </div>
+
+                <!-- CRM View -->
+                <div id="crmView" style="display: none;">
+                    <div class="person-grid" id="personGrid"></div>
+                </div>
+
+                <!-- Reports View -->
+                <div id="reportsView" style="display: none;">
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <div class="analytics-header">
+                                <span class="analytics-title">Conversion Rate</span>
+                                <i data-lucide="percent" style="color: var(--primary);"></i>
+                            </div>
+                            <div class="analytics-value">68.5%</div>
+                            <div class="analytics-change positive">
+                                <i data-lucide="arrow-up" style="width: 14px; height: 14px;"></i>
+                                <span>+5.2% from last period</span>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="analytics-header">
+                                <span class="analytics-title">Repeat Attendees</span>
+                                <i data-lucide="repeat" style="color: var(--success);"></i>
+                            </div>
+                            <div class="analytics-value" id="repeatAttendeesCount">0</div>
+                            <div class="analytics-change positive">
+                                <i data-lucide="arrow-up" style="width: 14px; height: 14px;"></i>
+                                <span>+12.3% from last period</span>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <div class="analytics-header">
+                                <span class="analytics-title">Average Event Size</span>
+                                <i data-lucide="users-2" style="color: var(--purple);"></i>
+                            </div>
+                            <div class="analytics-value" id="avgEventSize">0</div>
+                            <div class="analytics-change negative">
+                                <i data-lucide="arrow-down" style="width: 14px; height: 14px;"></i>
+                                <span>-2.1% from last period</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i data-lucide="line-chart"></i>
+                                Monthly Performance Comparison
+                            </div>
+                        </div>
+                        <canvas id="monthlyComparisonChart" height="70"></canvas>
+                    </div>
+                </div>
+
+                <!-- Analytics View -->
+                <div id="analyticsView" style="display: none;">
+                    <div class="chart-grid">
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i data-lucide="activity"></i>
+                                    Engagement Over Time
+                                </div>
+                            </div>
+                            <canvas id="engagementChart" height="80"></canvas>
+                        </div>
+
+                        <div class="chart-section">
+                            <div class="chart-header">
+                                <div class="chart-title">
+                                    <i data-lucide="layers"></i>
+                                    Participant Segmentation
+                                </div>
+                            </div>
+                            <canvas id="segmentationChart" height="80"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events View -->
+                <div id="eventsView" style="display: none;">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="table-title">All Events</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-secondary">
+                                    <i data-lucide="filter"></i>
+                                    Filter
+                                </button>
+                                <button class="btn btn-sm btn-primary">
+                                    <i data-lucide="plus"></i>
+                                    Add Event
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="eventsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Event Name</th>
+                                        <th>Date Created</th>
+                                        <th>Attendances</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="eventsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendances View -->
+                <div id="attendancesView" style="display: none;">
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3 class="table-title">All Attendances</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-secondary">
+                                    <i data-lucide="filter"></i>
+                                    Filter
+                                </button>
+                                <button class="btn btn-sm btn-success">
+                                    <i data-lucide="download"></i>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="attendancesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Participant</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Event</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="attendancesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export View -->
+                <div id="exportView" style="display: none;">
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <i data-lucide="download-cloud"></i>
+                                Data Export Center
+                            </div>
+                        </div>
+                        <div style="padding: 2rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                                <div style="padding: 2rem; background: var(--background); border-radius: var(--radius-md); text-align: center;">
+                                    <i data-lucide="file-text" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem;"></i>
+                                    <h4 style="margin-bottom: 0.5rem;">CSV Export</h4>
+                                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Export filtered data as CSV</p>
+                                    <button class="btn btn-primary" id="exportCsvBtn2">
+                                        <i data-lucide="download"></i>
+                                        Download CSV
+                                    </button>
+                                </div>
+
+                                <div style="padding: 2rem; background: var(--background); border-radius: var(--radius-md); text-align: center;">
+                                    <i data-lucide="file-spreadsheet" style="width: 48px; height: 48px; color: var(--success); margin-bottom: 1rem;"></i>
+                                    <h4 style="margin-bottom: 0.5rem;">Excel Export</h4>
+                                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Export with formatting</p>
+                                    <button class="btn btn-success" id="exportExcelBtn2">
+                                        <i data-lucide="download"></i>
+                                        Download Excel
+                                    </button>
+                                </div>
+
+                                <div style="padding: 2rem; background: var(--background); border-radius: var(--radius-md); text-align: center;">
+                                    <i data-lucide="printer" style="width: 48px; height: 48px; color: var(--purple); margin-bottom: 1rem;"></i>
+                                    <h4 style="margin-bottom: 0.5rem;">Print Report</h4>
+                                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Generate printable report</p>
+                                    <button class="btn btn-secondary" id="printBtn2">
+                                        <i data-lucide="printer"></i>
+                                        Print
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
+    <!-- Modal -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h2 id="modalTitle">Detay</h2>
-                <button id="modalClose" style="background:none; border:none; cursor:pointer;"><i data-lucide="x"></i></button>
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">
+                    <i data-lucide="user"></i>
+                    Participant Details
+                </h2>
+                <button class="modal-close" id="modalClose">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
-            <div id="modalBody"></div>
+            <div class="modal-body" id="modalBody"></div>
         </div>
     </div>
 
     <script>
+        // ========== CONFIGURATION ==========
         const SUPABASE_URL = 'https://iqrmitiszsyewgcsvuvs.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc'; // Burayı Anon Key ile doldurun
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlxcm1pdGlzenN5ZXdnY3N2dXZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NjE1OTQsImV4cCI6MjA4MTQzNzU5NH0.CnPYY4o9nkPVRQ1Uk9A4o231osvmtKsmxXH2ClDiabc';
 
-        let state = { events: [], attendances: [], participants: [], trendChart: null };
+        // Initialize Supabase Client
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // ========== GLOBAL STATE ==========
+        let allAttendances = [];
+        let allEvents = [];
+        let allParticipants = [];
+        let filteredAttendances = [];
+        let currentView = 'dashboard';
+        
+        // Chart instances
+        let trendChart = null;
+        let distributionChart = null;
+        let performanceChart = null;
+        let monthlyComparisonChart = null;
+        let engagementChart = null;
+        let segmentationChart = null;
+
+        // ========== INITIALIZATION ==========
         async function init() {
-            lucide.createIcons();
-            setupListeners();
-            await loadData();
+            try {
+                lucide.createIcons();
+                setupEventListeners();
+                showLoadingOverlay(true);
+                await loadData();
+                applyFilters();
+                renderCurrentView();
+                showToast('Welcome to EventHub Pro!', 'Dashboard loaded successfully', 'success');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showToast('Error', 'Failed to initialize dashboard', 'error');
+            } finally {
+                showLoadingOverlay(false);
+            }
         }
 
-        function setupListeners() {
+        // ========== EVENT LISTENERS ==========
+        function setupEventListeners() {
+            // Navigation
             document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
+                item.addEventListener('click', () => {
                     const view = item.dataset.view;
-                    document.getElementById('dashboardView').style.display = view === 'dashboard' ? 'block' : 'none';
-                    document.getElementById('crmView').style.display = view === 'crm' ? 'block' : 'none';
-                    if(view === 'crm') renderCRM();
+                    switchView(view);
                 });
             });
-            document.getElementById('refreshBtn').onclick = loadData;
-            document.getElementById('eventFilter').onchange = applyFilters;
-            document.getElementById('dateRangeFilter').onchange = applyFilters;
-            document.getElementById('modalClose').onclick = () => document.getElementById('modalOverlay').style.display = 'none';
-            document.getElementById('exportBtn').onclick = exportCSV;
+
+            // Filters
+            document.getElementById('eventFilter').addEventListener('change', applyFilters);
+            document.getElementById('dateRangeFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('sortFilter').addEventListener('change', applyFilters);
+            
+            document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
+            document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+
+            // Export buttons
+            document.getElementById('exportCsvBtn').addEventListener('click', exportToCSV);
+            document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+            document.getElementById('exportCsvBtn2').addEventListener('click', exportToCSV);
+            document.getElementById('exportExcelBtn2').addEventListener('click', exportToExcel);
+            
+            // Print
+            document.getElementById('printBtn').addEventListener('click', printReport);
+            document.getElementById('printBtn2').addEventListener('click', printReport);
+
+            // Refresh
+            document.getElementById('refreshAllBtn').addEventListener('click', () => {
+                loadData();
+                showToast('Refreshed', 'Data updated successfully', 'success');
+            });
+
+            // Modal
+            document.getElementById('modalClose').addEventListener('click', closeModal);
+            document.getElementById('modalOverlay').addEventListener('click', (e) => {
+                if (e.target.id === 'modalOverlay') closeModal();
+            });
+
+            // Global search
+            document.getElementById('globalSearch').addEventListener('input', handleGlobalSearch);
+
+            // Top bar buttons
+            document.getElementById('notificationBtn').addEventListener('click', () => {
+                showToast('Notifications', 'You have 3 new notifications', 'success');
+            });
         }
 
+        // ========== DATA LOADING ==========
         async function loadData() {
-            setLoading(true);
+            showLoading(true);
             try {
-                const [ev, att, part] = await Promise.all([
-                    sb.from('events').select('*'),
-                    sb.from('attendances').select('*, events(title)').order('created_at', {ascending: false}),
-                    sb.from('participants').select('*')
-                ]);
-                
-                state.events = ev.data || [];
-                state.attendances = att.data || [];
-                state.participants = part.data || [];
+                // Fetch events
+                const { data: eventsData, error: eventsError } = await supabase
+                    .from('events')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-                const filter = document.getElementById('eventFilter');
-                filter.innerHTML = '<option value="all">Tüm Etkinlikler</option>' + 
-                    state.events.map(e => `<option value="${e.id}">${e.title}</option>`).join('');
+                if (eventsError) throw eventsError;
+                allEvents = eventsData || [];
+
+                // Fetch attendances with event info
+                const { data: attendancesData, error: attendancesError } = await supabase
+                    .from('attendances')
+                    .select('*, events(title, is_active)')
+                    .order('created_at', { ascending: false });
+
+                if (attendancesError) throw attendancesError;
+                allAttendances = attendancesData || [];
+
+                // Fetch participants
+                const { data: participantsData, error: participantsError} = await supabase
+                    .from('participants')
+                    .select('*');
+
+                if (participantsError) throw participantsError;
+                allParticipants = participantsData || [];
+
+                updateEventFilter();
+                updateSidebarStats();
                 
-                applyFilters();
-            } catch (err) { console.error(err); }
-            setLoading(false);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Error', 'Failed to load data. Check console for details.', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ========== FILTERS ==========
+        function updateEventFilter() {
+            const eventFilter = document.getElementById('eventFilter');
+            eventFilter.innerHTML = '<option value="all">All Events</option>';
+            
+            if (allEvents && allEvents.length > 0) {
+                allEvents.forEach(event => {
+                    const option = document.createElement('option');
+                    option.value = event.id;
+                    option.textContent = event.title;
+                    eventFilter.appendChild(option);
+                });
+            }
         }
 
         function applyFilters() {
-            const evId = document.getElementById('eventFilter').value;
-            const days = document.getElementById('dateRangeFilter').value;
+            const eventId = document.getElementById('eventFilter').value;
+            const dateRange = document.getElementById('dateRangeFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const sort = document.getElementById('sortFilter').value;
+
+            filteredAttendances = allAttendances.filter(att => {
+                // Event filter
+                if (eventId !== 'all' && att.event_id !== eventId) return false;
+
+                // Date range filter
+                if (dateRange !== 'all') {
+                    const days = parseInt(dateRange);
+                    const cutoffDate = new Date();
+                    cutoffDate.setDate(cutoffDate.getDate() - days);
+                    const attDate = new Date(att.created_at);
+                    if (attDate < cutoffDate) return false;
+                }
+
+                // Status filter
+                if (status !== 'all') {
+                    if (att.events) {
+                        const isActive = att.events.is_active;
+                        if (status === 'active' && !isActive) return false;
+                        if (status === 'inactive' && isActive) return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Apply sorting
+            filteredAttendances.sort((a, b) => {
+                switch(sort) {
+                    case 'date_desc':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    case 'date_asc':
+                        return new Date(a.created_at) - new Date(b.created_at);
+                    case 'name_asc':
+                        return (a.full_name || '').localeCompare(b.full_name || '');
+                    case 'name_desc':
+                        return (b.full_name || '').localeCompare(a.full_name || '');
+                    default:
+                        return 0;
+                }
+            });
+
+            updateKPIs();
+            renderCurrentView();
+        }
+
+        function resetFilters() {
+            document.getElementById('eventFilter').value = 'all';
+            document.getElementById('dateRangeFilter').value = 'all';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('sortFilter').value = 'date_desc';
+            applyFilters();
+            showToast('Filters Reset', 'All filters have been cleared', 'success');
+        }
+
+        // ========== KPI UPDATES ==========
+        function updateKPIs() {
+            // Total attendances
+            document.getElementById('totalAttendances').textContent = filteredAttendances.length;
+
+            // Unique participants
+            const uniqueEmails = new Set(filteredAttendances.map(a => a.email).filter(Boolean));
+            const uniqueCount = allParticipants.length || uniqueEmails.size;
+            document.getElementById('uniqueParticipants').textContent = uniqueCount;
+
+            // Active events
+            const activeEventsCount = allEvents.filter(e => e.is_active).length;
+            document.getElementById('activeEvents').textContent = activeEventsCount;
+            document.getElementById('totalEventsCount').textContent = allEvents.length;
+
+            // Average attendance rate (mock calculation)
+            const avgRate = allEvents.length > 0 ? 
+                Math.round((filteredAttendances.length / allEvents.length) * 10) / 10 : 0;
+            document.getElementById('avgAttendanceRate').textContent = avgRate.toFixed(1) + '%';
+
+            // CRM badge
+            document.getElementById('crmBadge').textContent = uniqueCount;
+            document.getElementById('eventsBadge').textContent = activeEventsCount;
+        }
+
+        function updateSidebarStats() {
+            document.getElementById('sidebarTotalEvents').textContent = allEvents.length;
+            document.getElementById('sidebarTotalUsers').textContent = allParticipants.length;
+        }
+
+        // ========== VIEW SWITCHING ==========
+        function switchView(view) {
+            currentView = view;
             
-            let filtered = state.attendances;
-            if(evId !== 'all') filtered = filtered.filter(a => a.event_id === evId);
-            if(days !== 'all') {
-                const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-                filtered = filtered.filter(a => new Date(a.created_at) > cutoff);
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.view === view) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Hide all views
+            ['dashboardView', 'crmView', 'reportsView', 'analyticsView', 'eventsView', 'attendancesView', 'exportView'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+
+            // Show current view
+            const viewMap = {
+                dashboard: { id: 'dashboardView', title: 'Dashboard Overview', subtitle: 'Manage and analyze your events and participants', breadcrumb: 'Dashboard' },
+                crm: { id: 'crmView', title: 'CRM - Participants', subtitle: 'Manage your participant relationships', breadcrumb: 'CRM' },
+                reports: { id: 'reportsView', title: 'Reports & Analytics', subtitle: 'Detailed performance insights', breadcrumb: 'Reports' },
+                analytics: { id: 'analyticsView', title: 'Advanced Analytics', subtitle: 'Deep dive into your data', breadcrumb: 'Analytics' },
+                events: { id: 'eventsView', title: 'Event Management', subtitle: 'View and manage all events', breadcrumb: 'Events' },
+                attendances: { id: 'attendancesView', title: 'Attendance Records', subtitle: 'All attendance data', breadcrumb: 'Attendances' },
+                export: { id: 'exportView', title: 'Data Export', subtitle: 'Export your data in various formats', breadcrumb: 'Export' }
+            };
+
+            const viewInfo = viewMap[view] || viewMap.dashboard;
+            document.getElementById(viewInfo.id).style.display = 'block';
+            document.getElementById('pageTitle').textContent = viewInfo.title;
+            document.getElementById('pageSubtitle').textContent = viewInfo.subtitle;
+            document.getElementById('breadcrumbCurrent').textContent = viewInfo.breadcrumb;
+
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            switch(currentView) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'crm':
+                    renderCRM();
+                    break;
+                case 'reports':
+                    renderReports();
+                    break;
+                case 'analytics':
+                    renderAnalytics();
+                    break;
+                case 'events':
+                    renderEventsTable();
+                    break;
+                case 'attendances':
+                    renderAttendancesTable();
+                    break;
             }
-
-            document.getElementById('totalAttendances').textContent = filtered.length;
-            document.getElementById('uniqueParticipants').textContent = new Set(filtered.map(a => a.email)).size;
-            document.getElementById('activeEvents').textContent = state.events.filter(e => e.is_active).length;
-
-            renderTrend(filtered);
-            if(document.querySelector('.nav-item.active').dataset.view === 'crm') renderCRM(filtered);
+            
+            lucide.createIcons();
         }
 
-        function renderTrend(data) {
+        // ========== DASHBOARD RENDERING ==========
+        function renderDashboard() {
+            renderTrendChart();
+            renderDistributionChart();
+            renderPerformanceChart();
+        }
+
+        function renderTrendChart() {
             const ctx = document.getElementById('trendChart');
-            const counts = {};
-            data.forEach(a => {
-                const d = new Date(a.created_at).toLocaleDateString('tr-TR');
-                counts[d] = (counts[d] || 0) + 1;
+            if (!ctx) return;
+
+            // Prepare daily data
+            const dailyData = {};
+            filteredAttendances.forEach(att => {
+                if (!att.created_at) return;
+                const date = new Date(att.created_at).toLocaleDateString('tr-TR');
+                dailyData[date] = (dailyData[date] || 0) + 1;
             });
-            const labels = Object.keys(counts).reverse();
-            if(state.trendChart) state.trendChart.destroy();
-            state.trendChart = new Chart(ctx, {
+
+            const sortedDates = Object.keys(dailyData).sort((a, b) => {
+                const dateA = a.split('.').reverse().join('-');
+                const dateB = b.split('.').reverse().join('-');
+                return new Date(dateA) - new Date(dateB);
+            });
+
+            const labels = sortedDates.slice(-30);
+            const data = labels.map(date => dailyData[date]);
+
+            if (trendChart) trendChart.destroy();
+
+            trendChart = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'Kayıt', data: labels.map(l => counts[l]), borderColor: '#2563eb', fill: true, backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.4 }] },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Registrations',
+                        data: data,
+                        fill: true,
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderColor: '#2563eb',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            padding: 12,
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#2563eb',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
             });
         }
 
-        function renderCRM(data = state.attendances) {
-            const grid = document.getElementById('personGrid');
-            const groups = data.reduce((acc, curr) => {
-                if(!acc[curr.email]) acc[curr.email] = { name: curr.full_name, email: curr.email, history: [] };
-                acc[curr.email].history.push(curr);
-                return acc;
-            }, {});
+        function renderDistributionChart() {
+            const ctx = document.getElementById('distributionChart');
+            if (!ctx) return;
 
-            grid.innerHTML = Object.values(groups).map(p => `
-                <div class="person-card" onclick="showDetail('${p.email}')">
-                    <div class="avatar">${p.name[0]}</div>
-                    <div style="font-weight:700;">${p.name}</div>
-                    <div class="text-muted" style="font-size:0.8rem;">${p.email}</div>
-                    <div style="margin-top:1rem; font-size:0.9rem;"><b>${p.history.length}</b> Etkinlik</div>
-                </div>
-            `).join('');
+            // Count attendances by event
+            const eventCounts = {};
+            filteredAttendances.forEach(att => {
+                const eventName = att.events?.title || 'Unknown';
+                eventCounts[eventName] = (eventCounts[eventName] || 0) + 1;
+            });
+
+            const labels = Object.keys(eventCounts).slice(0, 5);
+            const data = labels.map(label => eventCounts[label]);
+
+            if (distributionChart) distributionChart.destroy();
+
+            distributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#2563eb',
+                            '#9333ea',
+                            '#16a34a',
+                            '#f59e0b',
+                            '#dc2626'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
-        function showDetail(email) {
-            const p = state.attendances.filter(a => a.email === email);
-            const body = document.getElementById('modalBody');
-            body.innerHTML = `
-                <div style="margin-bottom:1rem;"><b>E-posta:</b> ${email}</div>
-                <div><b>Katıldığı Etkinlikler:</b></div>
-                <div style="margin-top:0.5rem;">${p.map(a => `<span class="event-tag">${a.events?.title || 'Bilinmiyor'}</span>`).join('')}</div>
-            `;
-            document.getElementById('modalOverlay').style.display = 'flex';
+        function renderPerformanceChart() {
+            const ctx = document.getElementById('performanceChart');
+            if (!ctx) return;
+
+            // Count attendances by event
+            const eventCounts = {};
+            filteredAttendances.forEach(att => {
+                const eventName = att.events?.title || 'Unknown';
+                eventCounts[eventName] = (eventCounts[eventName] || 0) + 1;
+            });
+
+            // Get top 10 events
+            const sorted = Object.entries(eventCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const labels = sorted.map(e => e[0]);
+            const data = sorted.map(e => e[1]);
+
+            if (performanceChart) performanceChart.destroy();
+
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Attendances',
+                        data: data,
+                        backgroundColor: '#2563eb',
+                        borderRadius: 8,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
         }
 
-        function exportCSV() {
-            const headers = "Ad Soyad,Email,Telefon,Etkinlik,Tarih\n";
-            const rows = state.attendances.map(a => `${a.full_name},${a.email},${a.phone},${a.events?.title},${a.created_at}`).join("\n");
-            const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "katilimci_listesi.csv";
-            link.click();
-        }
+        // ========== CRM RENDERING ==========
+        function renderCRM() {
+            const personGrid = document.getElementById('personGrid');
+            if (!personGrid) return;
+            
+            personGrid.innerHTML = '';
 
-        function setLoading(active) {
-            document.getElementById('loadingBar').style.transform = active ? 'scaleX(1)' : 'scaleX(0)';
-        }
+            // Group by email
+            const personMap = new Map();
+            filteredAttendances.forEach(att => {
+                if (!att.email) return;
+                
+                if (!personMap.has(att.email)) {
+                    personMap.set(att.email, {
+                        name: att.full_name || 'Unknown',
+                        email: att.email,
+                        phone: att.phone || 'N/A',
+                        attendances: []
+                    });
+                }
+                personMap.get(att.email).attendances.push(att);
+            });
 
-        init();
-    </script>
-</body>
-</html>
+            if (personMap.size === 0) {
+                personGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-lucide="users" style="width: 100%; height: 100%;"></i>
+                        </div>
+                        <h3>No participants found</h3>
+                        px; height: 14px;"></i>
+                                <span>12%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="totalAttendances">0</div>
+                        <div class="kpi-description">
+                            <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
+                            Across all events
+                        </div>
+                        <div class="kpi-footer">
+                            <span class="kpi-footer-text">Last updated: Now</span>
+                            <span class="kpi-footer-link">
+                                View Details
+                                <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-title-group">
+                                <div class="kpi-icon green">
+                                    <i data-lucide="user-check"></i>
+                                </div>
+                                <div class="kpi-title">Unique Participants</div>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
+                                <span>8%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="uniqueParticipants">0</div>
+                        <div class="kpi-description">
+                            <i data-lucide="database" style="width: 14px; height: 14px;"></i>
+                            In your database
+                        </div>
+                        <div class="kpi-footer">
+                            <span class="kpi-footer-text">Growth this month</span>
+                            <span class="kpi-footer-link">
+                                View CRM
+                                <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-title-group">
+                                <div class="kpi-icon purple">
+                                    <i data-lucide="calendar"></i>
+                                </div>
+                                <div class="kpi-title">Active Events</div>
+                            </div>
+                            <div class="kpi-trend down">
+                                <i data-lucide="trending-down" style="width: 14px; height: 14px;"></i>
+                                <span>3%</span>
+                            </div>
+                        </div>
+                        <div class="kpi-value" id="activeEvents">0</div>
+                        <div class="kpi-description">
+                            <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                            Currently running
+                        </div>
+                        <div class="kpi-footer">
+                            <span class="kpi-footer-text">Total events: <span id="totalEventsCount">0</span></span>
+                            <span class="kpi-footer-link">
+                                Manage
+                                <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div class="kpi-title-group">
+                                <div class="kpi-icon orange">
+                                    <i data-lucide="target"></i>
+                                </div>
+                                <div class="kpi-title">Avg. Attendance Rate</div>
+                            </div>
+                            <div class="kpi-trend up">
+                                <i data-lucide="trending-up" style="width: 14
